@@ -31,11 +31,14 @@
         }
 
         this.dispatch = function (message, from, to) {
-            for(var key in participants){
-                if (participants[key] !== from) {
-                    participants[key].receive(message, from);
+            if(to)
+                to.receive(message, from);
+            else
+                for(var key in participants){
+                    if (participants[key] !== from) {
+                        participants[key].receive(message, from);
+                    }
                 }
-            }
         }
     }
 
@@ -50,14 +53,14 @@
 
     var participant = function(name) {
         this.name = name;
-        this.chatroom = null;
+        this.mediator = null;
 
-        this.send = function(message, to) {
-            this.chatroom.send(message, this, to);
+        this.dispatch = function(message, to) {
+            this.mediator.dispatch(message, this, to);
         };
 
         this.receive = function(message, from) {
-            log.add(from.name + " to " + this.name + ": " + message);
+            console.log(from.name + " to " + this.name + ": " + message);
         }
     };
 
@@ -66,10 +69,18 @@
         var med = new mediator();
         var participant1 = new participant('reza1');
         var participant2 = new participant('reza2');
+        var participant3 = new participant('reza3');
 
         new producer(med, participant1);
         new producer(med, participant2);
+        new producer(med, participant3);
+
+        med.register(participant1);
+
+        participant1.dispatch('now participant 1 dispatching')
+        new consumer(med, participant1);
     }
+    executor();
 
     function eventHandler(event, element) {
         switch (event.target.id + ':' + event.type) {
