@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html onclick="console.log('master');">
+<head lang="en">
+    <meta charset="utf-8">
+    <title>Ecstasy::</title>
+    <script src="src/app.js" type="text/javascript"></script>
+</head>
+<body
+        onclick="eventHandler(event, this)"
+        onmousedown="eventHandler(event, this)">
+
+<h1>Counter Example</h1>
+
+<input id="buttonDecrement" type="button" value="-"/>
+<span id="result">Result: {{count}}</span>
+<input type="button" onclick="doLoop()" value="show 10 times"/>
+<input id="buttonIncrement" type="button" value="+" />
+
+
+<script type="text/javascript">
+
+    function eventHandler(event, element) {
+        switch (event.target.id + ':' + event.type) {
+            case 'buttonIncrement:click' :
+                onIncrement()
+                break;
+            case 'buttonIncrement:mousedown' :
+                onMouseDown()
+                break;
+            case 'buttonDecrement:click' :
+                decrement()
+                break;
+            default :
+                console.log('default')
+        }
+    }
+
+    var count = 0;
+    init();
+
+    function decrement() {
+        count--;
+        show();
+    }
+
+    function onIncrement() {
+        count++;
+        show();
+    }
+
+    function onMouseDown() {
+        document.getElementById('buttonIncrement').style = 'background-color: rgb('+ 10 * count +', '+ 40 * count +', '+ 30 * count +');'
+    }
+
+    function init() {
+        show();
+    }
+
+    function doLoop() {
+        for (var i = 0; i < 1000000; i++) {
+            count++;
+            show();
+        }
+    }
+
+    function show() {
+        document.getElementById('result').innerText = count;
+    }
+
+</script>
+</body>
+</html>
