@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html onclick="console.log('master');">
+<html>
 <head lang="en">
     <meta charset="utf-8">
     <title>Ecstasy::</title>
@@ -12,12 +12,64 @@
 <h1>Counter Example</h1>
 
 <input id="buttonDecrement" type="button" value="-"/>
+
 <span id="result">Result: {{count}}</span>
 <input type="button" onclick="doLoop()" value="show 10 times"/>
-<input id="buttonIncrement" type="button" value="+" />
+
+<input id="buttonIncrement" type="button" value="+"/>
 
 
 <script type="text/javascript">
+
+    //mediator
+    function mediator() {
+        var participants = {};
+
+        this.register = function (participant) {
+            participants[participant.name] = participant;
+            participant.mediator = this;
+        }
+
+        this.dispatch = function (message, from, to) {
+            for(var key in participants){
+                if (participants[key] !== from) {
+                    participants[key].receive(message, from);
+                }
+            }
+        }
+    }
+
+    //producer
+    function producer(med, participant) {
+        med.register(participant);
+    }
+
+    function consumer(med, participant){
+        med.dispatch("Hello World", participant);
+    }
+
+    var participant = function(name) {
+        this.name = name;
+        this.chatroom = null;
+
+        this.send = function(message, to) {
+            this.chatroom.send(message, this, to);
+        };
+
+        this.receive = function(message, from) {
+            log.add(from.name + " to " + this.name + ": " + message);
+        }
+    };
+
+    function executor(){
+
+        var med = new mediator();
+        var participant1 = new participant('reza1');
+        var participant2 = new participant('reza2');
+
+        new producer(med, participant1);
+        new producer(med, participant2);
+    }
 
     function eventHandler(event, element) {
         switch (event.target.id + ':' + event.type) {
@@ -38,18 +90,21 @@
     var count = 0;
     init();
 
+    //consumer 1
     function decrement() {
         count--;
         show();
     }
 
+    //consumer 1
     function onIncrement() {
         count++;
         show();
     }
 
+    //consumer 1
     function onMouseDown() {
-        document.getElementById('buttonIncrement').style = 'background-color: rgb('+ 10 * count +', '+ 40 * count +', '+ 30 * count +');'
+        document.getElementById('buttonIncrement').style = 'background-color: rgb(' + 10 * count + ', ' + 40 * count + ', ' + 30 * count + ');'
     }
 
     function init() {
