@@ -77,4 +77,4 @@ function run() {
     log.show();
 }
 
-run();
+//run();

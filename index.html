@@ -40,6 +40,19 @@
                     }
                 }
         }
+
+        this.run = function(name){
+            var participant = participants[name];
+            if(!participant.state) participant.state = {};
+
+            participant.execute();
+            for(var t=0; t<participant.targets.length; t++){
+                var target = participant.targets[t];
+                var targetParticipant = participants[target];
+                targetParticipant.update(participant.state);
+            }
+
+        }
     }
 
     //producer
@@ -64,28 +77,39 @@
         }
     };
 
-    function executor(){
+    function main(){
+        med = new mediator();
 
-        var med = new mediator();
-        var participant1 = new participant('reza1');
-        var participant2 = new participant('reza2');
-        var participant3 = new participant('reza3');
+        var incrementAction = {
+            name: 'buttonIncrement:click',
+            execute: function(){
+                if(!this.state.count) this.state.count =0;
+                this.state.count++;
 
-        new producer(med, participant1);
-        new producer(med, participant2);
-        new producer(med, participant3);
+                this.state.color= 'rgb(' + 10 * this.state.count + ', ' + 40 * this.state.count + ', ' + 30 * this.state.count + ');';
+            },
+            targets:['result','buttonIncrement:click'],
+            update: function(actionState){
+                document.getElementById('buttonIncrement').style = 'background-color: ' + actionState.color;
+            }
+        };
+        med.register(incrementAction);
 
-        med.register(participant1);
+        var incrementView = {
+            name: 'result',
+            update: function(actionState){
+                document.getElementById(this.name).innerText = actionState.count;
+            }
+        }
+        med.register(incrementView);
 
-        participant1.dispatch('now participant 1 dispatching')
-        new consumer(med, participant1);
     }
-    executor();
+    main();
 
     function eventHandler(event, element) {
         switch (event.target.id + ':' + event.type) {
             case 'buttonIncrement:click' :
-                onIncrement()
+                med.run('buttonIncrement:click');
                 break;
             case 'buttonIncrement:mousedown' :
                 onMouseDown()
