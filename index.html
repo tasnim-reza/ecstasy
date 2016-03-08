@@ -5,9 +5,12 @@
     <title>Ecstasy::</title>
     <script src="src/app.js" type="text/javascript"></script>
 </head>
-<body
-        onclick="eventHandler(event, this)"
-        onmousedown="eventHandler(event, this)">
+<body id="body"
+      onclick="eventHandler(event, this)"
+      onmousedown="eventHandler(event, this)"
+      onkeydown="eventHandler(event, this)"
+      onkeyup="eventHandler(event, this)"
+      onchange="eventHandler(event, this)">
 
 <h1>Counter Example</h1>
 
@@ -18,145 +21,11 @@
 
 <input id="buttonIncrement" type="button" value="+"/>
 
+<input id="countResult" type="text" value="0"/>
+<select id="district">
+    <option value="dhaka">dhaka</option>
+    <option value="rajshahi">rajshahi</option>
+</select>
 
-<script type="text/javascript">
-
-    //mediator
-    function mediator() {
-        var participants = {};
-
-        this.register = function (participant) {
-            participants[participant.name] = participant;
-            participant.mediator = this;
-        }
-
-        this.dispatch = function (message, from, to) {
-            if(to)
-                to.receive(message, from);
-            else
-                for(var key in participants){
-                    if (participants[key] !== from) {
-                        participants[key].receive(message, from);
-                    }
-                }
-        }
-
-        this.run = function(name){
-            var participant = participants[name];
-            if(!participant.state) participant.state = {};
-
-            participant.execute();
-            for(var t=0; t<participant.targets.length; t++){
-                var target = participant.targets[t];
-                var targetParticipant = participants[target];
-                targetParticipant.update(participant.state);
-            }
-
-        }
-    }
-
-    //producer
-    function producer(med, participant) {
-        med.register(participant);
-    }
-
-    function consumer(med, participant){
-        med.dispatch("Hello World", participant);
-    }
-
-    var participant = function(name) {
-        this.name = name;
-        this.mediator = null;
-
-        this.dispatch = function(message, to) {
-            this.mediator.dispatch(message, this, to);
-        };
-
-        this.receive = function(message, from) {
-            console.log(from.name + " to " + this.name + ": " + message);
-        }
-    };
-
-    function main(){
-        med = new mediator();
-
-        var incrementAction = {
-            name: 'buttonIncrement:click',
-            execute: function(){
-                if(!this.state.count) this.state.count =0;
-                this.state.count++;
-
-                this.state.color= 'rgb(' + 10 * this.state.count + ', ' + 40 * this.state.count + ', ' + 30 * this.state.count + ');';
-            },
-            targets:['result','buttonIncrement:click'],
-            update: function(actionState){
-                document.getElementById('buttonIncrement').style = 'background-color: ' + actionState.color;
-            }
-        };
-        med.register(incrementAction);
-
-        var incrementView = {
-            name: 'result',
-            update: function(actionState){
-                document.getElementById(this.name).innerText = actionState.count;
-            }
-        }
-        med.register(incrementView);
-
-    }
-    main();
-
-    function eventHandler(event, element) {
-        switch (event.target.id + ':' + event.type) {
-            case 'buttonIncrement:click' :
-                med.run('buttonIncrement:click');
-                break;
-            case 'buttonIncrement:mousedown' :
-                onMouseDown()
-                break;
-            case 'buttonDecrement:click' :
-                decrement()
-                break;
-            default :
-                console.log('default')
-        }
-    }
-
-    var count = 0;
-    init();
-
-    //consumer 1
-    function decrement() {
-        count--;
-        show();
-    }
-
-    //consumer 1
-    function onIncrement() {
-        count++;
-        show();
-    }
-
-    //consumer 1
-    function onMouseDown() {
-        document.getElementById('buttonIncrement').style = 'background-color: rgb(' + 10 * count + ', ' + 40 * count + ', ' + 30 * count + ');'
-    }
-
-    function init() {
-        show();
-    }
-
-    function doLoop() {
-        for (var i = 0; i < 1000000; i++) {
-            count++;
-            show();
-        }
-    }
-
-    function show() {
-        document.getElementById('result').innerText = count;
-    }
-
-</script>
 </body>
 </html>
