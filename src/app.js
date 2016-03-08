@@ -2,22 +2,22 @@
 function mediator() {
     var participants = {};
     var state = {};
+    var dom = {};
+    var physicalDom = {
+        'document': document,
+        'body': document.body
+    };
+    var events={
+        'onclick': 'click',
+        'onmousedown': 'mousedown',
+        'onkeyup': 'keyup'
+    }
 
     this.register = function (participant) {
         participants[participant.name] = participant;
+        participant.id = participant.name.split(':')[0];
         participant.mediator = this;
         participant.state = state;
-    }
-
-    this.dispatch = function (message, from, to) {
-        if (to)
-            to.receive(message, from);
-        else
-            for (var key in participants) {
-                if (participants[key] !== from) {
-                    participants[key].receive(message, from);
-                }
-            }
     }
 
     this.run = function (name, event, element) {
@@ -38,36 +38,47 @@ function mediator() {
 
         participant.execute(targetValue);
 
+        updateDom(participant)
         //call the updaters
+
+
+
+    }
+
+    function updateDom(participant){
         for (var t = 0; t < (participant.targets && participant.targets.length); t++) {
             var target = participant.targets[t];
             var targetParticipant = participants[target];
-            targetParticipant.update();
+            targetParticipant.update(dom);
+            render(targetParticipant);
         }
     }
-}
 
-//producer
-function producer(med, participant) {
-    med.register(participant);
-}
+    function render(participant){
+        if(!physicalDom[participant.id]) {
+            physicalDom[participant.id] = document.getElementById(participant.id)
+        }
 
-function consumer(med, participant) {
-    med.dispatch("Hello World", participant);
-}
+        var attrs = dom[participant.id];
 
-var participant = function (name) {
-    this.name = name;
-    this.mediator = null;
+        for(var key in attrs) {
+            physicalDom[participant.id][key] = attrs[key]
+        }
 
-    this.dispatch = function (message, to) {
-        this.mediator.dispatch(message, this, to);
-    };
-
-    this.receive = function (message, from) {
-        console.log(from.name + " to " + this.name + ": " + message);
     }
-};
+
+    function init(){
+        for(var key in events) {
+            physicalDom.body.addEventListener(events[key], eventHandler)
+        }
+    }
+    init()
+
+    function eventHandler(event, element) {
+        var actionName = event.target.id + ':' + event.type;
+        med.run(actionName, event, element);
+    }
+}
 
 function main() {
     med = new mediator();
@@ -81,8 +92,10 @@ function main() {
             this.state.color = 'rgb(' + 10 * this.state.count + ', ' + 40 * this.state.count + ', ' + 30 * this.state.count + ');';
         },
         targets: ['result', 'buttonIncrement:click', 'countResult:keyup'],
-        update: function () {
-            document.getElementById('buttonIncrement').style = 'background-color: ' + this.state.color;
+        update: function (dom) {
+            if(!dom['buttonIncrement']) dom['buttonIncrement'] = {};
+
+            dom['buttonIncrement'].style = 'background-color: ' + this.state.color;
         }
     };
     med.register(incrementOnClickAction);
@@ -96,16 +109,19 @@ function main() {
             this.state.color = 'rgb(' + 10 * this.state.count + ', ' + 40 * this.state.count + ', ' + 30 * this.state.count + ');';
         },
         targets: ['result', 'buttonIncrement:click'],
-        update: function () {
-            document.getElementById('buttonIncrement').style = 'background-color: ' + this.state.color;
+        update: function (dom) {
+            if(!dom['buttonIncrement']) dom['buttonIncrement'] = {};
+
+            dom['buttonIncrement'].style = 'background-color: ' + this.state.color;
         }
     };
     med.register(incrementOnMouseDownAction);
 
     var incrementView = {
         name: 'result',
-        update: function () {
-            document.getElementById(this.name).innerText = this.state.count;
+        update: function (dom) {
+            if(!dom[this.name]) dom[this.name] = {};
+            dom[this.name].innerText = this.state.count;
         }
     }
     med.register(incrementView);
@@ -116,8 +132,9 @@ function main() {
             if (!this.state.count) this.state.count = 0;
             this.state.count = value;
         },
-        update: function () {
-            document.getElementById('countResult').value = this.state.count;
+        update: function (dom) {
+            if(!dom['countResult']) dom['countResult'] = {};
+            dom['countResult'].value = this.state.count;
         },
         targets: ['result']
     }
@@ -125,7 +142,3 @@ function main() {
 }
 main();
 
-function eventHandler(event, element) {
-    var actionName = event.target.id + ':' + event.type;
-    med.run(actionName, event, element);
-}
