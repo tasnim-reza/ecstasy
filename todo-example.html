@@ -6,19 +6,20 @@
 
 </head>
 <body id="body">
+<div id="todolist">
     <h1>Todo list example</h1>
     <input type="text" id="todo"/>
-    <input type="button" id="addTodo" value="Add Todo"/>
-    <input type="button" id="loadDefault" value="load default"/>
+    <input type="button" id="todolist:addTodo" value="Add Todo"/>
+    <input type="button" id="todolist:loadDefault" value="load default"/>
 
-    <ol id="todoList">
-        <li> {item}
-            <button id="done">done</button>
+    <ol id="todolist:tpl">
+        <li > {item}
+            <button id="todolist:done" data-id="{id}">done</button>
             --
-            <button id="cancel">cancel</button>
+            <button id="todolist:cancel" data-id="{id}">cancel</button>
         </li>
     </ol>
-
-    <script src="src/todo-example.js" type="text/javascript"></script>
+</div>
+<script src="src/todo-example.js" type="text/javascript"></script>
 </body>
 </html>

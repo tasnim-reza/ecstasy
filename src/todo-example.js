@@ -1,5 +1,5 @@
 //mediator
-function mediator() {
+(function mediator() {
     var participants = {};
     var state = {};
     var dom = {};
@@ -7,51 +7,62 @@ function mediator() {
         'document': document,
         'body': document.body
     };
-    var events={
+    var events = {
         'onclick': 'click',
         'onmousedown': 'mousedown',
         'onkeyup': 'keyup'
     }
 
     /*utility*/
-    dom.add = function(key,val){
+    dom.add = function (key, val) {
 
     }
 
-    this.register = function (participant) {
-        participants[participant.name] = participant;
-        participant.id = participant.name.split(':')[0];
-        participant.mediator = this;
-        participant.state = state;
+    var ecstasy = {
+        register: function (participant) {
+            participants[participant.name] = participant;
+
+            participant.id = participant.name.split(':')[0];
+            participant.mediator = this;
+            participant.state = state;
+        },
+
+        run: function (name, event, element) {
+            var componentName = name.split(':')[0];
+            var eventName = name.split(':')[1] + ':' + name.split(':')[2];
+            var participant = participants[componentName];
+
+            var targetType = event.target.type;
+            var targetValue = null;
+            if (targetType === 'text') {
+                targetValue = parseInt(event.target.value);
+            }
+
+            var data = event.target.dataset;
+
+            participant.createState();
+            updateState(eventName, participant);
+            updateView(eventName, participant);
+            participant.updateView();
+
+            //call the updaters
+        }
     }
 
-    this.run = function (name, event, element) {
-        if (!participants[name]) {
-            console.log('unhandled action: ', name);
+    function updateState(eventName, participant) {
+        eventName = 'updateState:' + eventName;
+
+        if (!participant[eventName]) {
+            console.log('unhandled action: ', eventName);
             return;
         } else {
-            console.log('handled action: ', name);
+            console.log('handled action: ', eventName);
         }
 
-        var participant = participants[name];
-
-        var targetType = event.target.type;
-        var targetValue = null;
-        if (targetType === 'text') {
-            targetValue = parseInt(event.target.value);
-        }
-
-        participant.execute(targetValue);
-        participant.update(dom);
-
-        updateDom(participant)
-        //call the updaters
-
-
-
+        participant[eventName]();
     }
 
-    function updateDom(participant){
+    function updateView(eventName, participant) {
         for (var t = 0; t < (participant.targets && participant.targets.length); t++) {
             var target = participant.targets[t];
             var targetParticipant = participants[target];
@@ -61,78 +72,79 @@ function mediator() {
         }
     }
 
-    function render(participant){
-        if(!physicalDom[participant.id]) {
+    function render(participant) {
+        if (!physicalDom[participant.id]) {
             physicalDom[participant.id] = document.getElementById(participant.id)
         }
 
         var attrs = dom[participant.id];
 
-        for(var key in attrs) {
+        for (var key in attrs) {
             physicalDom[participant.id][key] = attrs[key]
         }
 
     }
 
-    function init(){
-        for(var key in events) {
+    function init() {
+        for (var key in events) {
             physicalDom.body.addEventListener(events[key], eventHandler)
         }
     }
+
     init()
 
     function eventHandler(event, element) {
         var actionName = event.target.id + ':' + event.type;
-        med.run(actionName, event, element);
+        ecstasy.run(actionName, event, element);
     }
-}
+
+    window.ecstasy = ecstasy;
+})();
 
 function main() {
-    med = new mediator();
 
-    var todoListView ={
-        name: 'loadDefault:click',
-        execute: function(){
-            if (!this.state.todoList) this.state.todoList = ['call home', 'shopping', 'talk to house owner'];
+    var tpl = null;
+    var todoListComponent = {
+        name: 'todolist',
+        createState: function () {
+            this.state.todoList = [
+                {id: 0, value: 'call home'},
+                {id: 1, value: 'shopping'},
+                {id: 2, value: 'talk to house owner'}];
         },
-        update: function(dom){
-            var tpl = document.getElementById('todoList').innerHTML;
-            var tplList = [];
-            this.state.todoList.forEach(function (item) {
-
-                tplList.push(tpl.replace('{item}',item));
-
-            })
-            //dom.todoList.add('item', item);
-
-            document.getElementById('todoList').innerHTML = tplList.join('');
-        }
-    }
-    med.register(todoListView);
-
-    var tpl = undefined;
-    var todoListView ={
-        name: 'addTodo:click',
-        execute: function(){
+        ['updateState:addTodo:click']: function () {
             if (!this.state.todoList) this.state.todoList = [];
-            this.state.todoList.push(document.getElementById('todo').value)
+            this.state.todoList.push({
+                id: this.state.todoList.length.toString(),
+                value: document.getElementById('todo').value
+            })
+            document.getElementById('todo').value = '';
         },
-        update: function(dom){
-            if(!tpl) tpl = document.getElementById('todoList').innerHTML;
-            var tplList = [];
-            if(tpl.search('{item}')>0) {
-                this.state.todoList.forEach(function (item) {
+        ['updateState:done:click']: function () {
+            this.state.todoList = this.state.todoList.filter(function (item) {
+                return data.id != item.id;
+            });
+        },
+        updateView: function () {
+            if (!tpl) tpl = document.getElementById('todolist:tpl').innerHTML;
 
-                    tplList.push(tpl.replace('{item}', item));
+            var tplList = [];
+            if (tpl.search('{item}') > 0) {
+                this.state.todoList.forEach(function (item, id) {
+                    var replacedByData = tpl.replace('{item}', item.value);
+                    var replacedByEventId = replacedByData.replace(/{id}/g, item.id);
+
+                    tplList.push(replacedByEventId);
 
                 })
                 //dom.todoList.add('item', item);
 
-                document.getElementById('todoList').innerHTML = tplList.join('');
+                document.getElementById('todolist:tpl').innerHTML = tplList.join('');
             }
-        }
-    }
-    med.register(todoListView);
+        },
+        targets: []
+    };
+    ecstasy.register(todoListComponent);
 }
 main();
 
