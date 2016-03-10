@@ -1,6 +1,7 @@
 //mediator
 (function mediator() {
     var participants = {};
+    var initializedComponents = [];
     var state = {};
     var dom = {};
     var physicalDom = {
@@ -11,12 +12,7 @@
         'onclick': 'click',
         'onmousedown': 'mousedown',
         'onkeyup': 'keyup'
-    }
-
-    /*utility*/
-    dom.add = function (key, val) {
-
-    }
+    };
 
     var ecstasy = {
         register: function (participant) {
@@ -32,6 +28,13 @@
             var eventName = name.split(':')[1] + ':' + name.split(':')[2];
             var participant = participants[componentName];
 
+            if (!participant || !participant['updateState:' + eventName]) {
+                console.log('unhandled action: ', eventName);
+                return;
+            } else {
+                console.log('handled action: ', eventName);
+            }
+
             var targetType = event.target.type;
             var targetValue = null;
             if (targetType === 'text') {
@@ -40,7 +43,7 @@
 
             var data = event.target.dataset;
 
-            participant.createState();
+            initComponent(participant);
             updateState(eventName, participant);
             updateView(eventName, participant);
             participant.updateView();
@@ -49,17 +52,20 @@
         }
     }
 
+    function initComponent(participant) {
+        if (participant && !(initializedComponents.indexOf(participant.name) > -1)) {
+            initializedComponents.push(participant.name);
+            participant.createState()
+        }
+    }
+
     function updateState(eventName, participant) {
         eventName = 'updateState:' + eventName;
 
-        if (!participant[eventName]) {
-            console.log('unhandled action: ', eventName);
-            return;
-        } else {
-            console.log('handled action: ', eventName);
-        }
 
-        participant[eventName]();
+        var data = event.target.dataset;
+
+        participant[eventName](data);
     }
 
     function updateView(eventName, participant) {
@@ -85,13 +91,13 @@
 
     }
 
-    function init() {
+    function initMediator() {
         for (var key in events) {
             physicalDom.body.addEventListener(events[key], eventHandler)
         }
     }
 
-    init()
+    initMediator()
 
     function eventHandler(event, element) {
         var actionName = event.target.id + ':' + event.type;
@@ -113,14 +119,13 @@ function main() {
                 {id: 2, value: 'talk to house owner'}];
         },
         ['updateState:addTodo:click']: function () {
-            if (!this.state.todoList) this.state.todoList = [];
             this.state.todoList.push({
                 id: this.state.todoList.length.toString(),
                 value: document.getElementById('todo').value
             })
             document.getElementById('todo').value = '';
         },
-        ['updateState:done:click']: function () {
+        ['updateState:done:click']: function (data) {
             this.state.todoList = this.state.todoList.filter(function (item) {
                 return data.id != item.id;
             });
