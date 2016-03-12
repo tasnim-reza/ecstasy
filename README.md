@@ -1,5 +1,15 @@
 # ecstasy
-Ecstasy is a client side application framework. What if we have only single event listener and single state ? lets see
+Ecstasy is a client side application framework. What if we have only single event listener, single state and single DOM manipulation place ? lets see
+
+## Problems
+
+1. addEventListener/removeEventListener
+    Single event listener
+2. arbitrary javascript object change
+    Single state container
+3. inefficiently dom manipulation
+    Request us to manipulate your dom, don't need to touch yourself.
+
 
 ## Structure
 
