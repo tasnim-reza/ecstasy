@@ -56,81 +56,113 @@
     ecstasy.register(todoListComponent);
 })();
 
-function stateUpdater(){
+(function bubbleFlow(){
 
-    var actionFlow =["viewActions", "stateUpdaters", "viewUpdaters"];
-     this.viewActions = {
-         register: function(){
+    var bubbleFlow =["viewActions", "modelStateUpdaters", "elementStateUpdaters", "viewUpdaters"];
 
-         },
-         dispatch: function(){
-
-         }
-     };
-
-    this.viewActions.register("todoModel").on("click", function(){
-
-    });
-
-    this.stateUpdaters.register("todoModel").on("click", function(){
-
-    })
-
-    this.stateUpdaters = [];
-    this.stateValidators = [];
-
-}
-
-function stateValidator(){
-
-}
-
-function viewUpdater(){
-
-}
-
-function actionContainer(){
-
-}
-
-var toDoActions ={
-    onBlurTodoModel: function () {
-
+    var events = {};
+    var state = {
+        event:{
+            publish: function(eventName){
+                events[eventName]();
+            }
+        }
     }
-}
+    var elementState = {};
 
-function toDoListComponent() {
-    this.name = 'todoList';
+    this.bubbleFlow={
+        createModelStateUpdater: function(modelUpdater){
+            var updater = Object.create(modelUpdater.prototype),
+                key = '';
+            updater.registerFor = function(elementId){
+                this.on = function(eventName, callback){
+                    key = elementId + ':' + eventName;
+                    events[key] = callback;
+                }
+                return this;
+            };
 
-    this.initModelState = function () {
-        this.state.todolist = ['dhaka', 'rajshahi'];
+            updater.state = state;
+            modelUpdater.apply(updater,[]);
+            var foo = events[key];
+            foo.bind(updater);
+
+            setTimeout(function(){
+                events['addTodo:click']({});
+            })
+        },
+        createElementStateStateUpdater: function(elementUpdater){
+            var updater = Object.create(elementUpdater.prototype);
+            updater.registerFor = function(elementId){
+                this.on = function(eventName, callback){
+                    events[[elementId,eventName]] = callback;
+                }
+                return this;
+            };
+
+            updater.elementState = elementState;
+            elementUpdater.apply(updater,[]);
+        },
+        createViewUpdater: function(viewUpdater){
+            var updater = Object.create(viewUpdater.prototype);
+            viewUpdater.apply(updater,[]);
+            for(var key in updater){
+                events[key] = updater[key];
+            }
+            updater.state = state;
+            updater.elementState = elementState;
+        }
+    }
+    return this;
+})();
+
+bubbleFlow.createModelStateUpdater(function(){
+    this.initModelState= function(){
+        this.state.todModel = '';
+        this.state.todoList = [{id:0, value: 'dhaka'}, {id:0, value: 'rajshahi'}];
     };
 
-    this.onblur('todoModel', function updateModel (data) {
-        //need to update state
-
-        this.state.todoModel = data.todoModel;
-    }, function updateView(){
-        /* propagate other update */
+    this.registerFor("addTodo").on("click", function(event){
+        var listItem = {id: this.state.todoList.length+1, value: this.state.todoModel};
+        this.state.todoList.push(listItem);
+        this.state.event.publish('onItemAdded');
     });
 
-    this.onclick('addTodo', function updateModel () {
-        var listItem = {id: data.id, value: data.modelValue};
-        this.state.todolist.push(listItem);
-    }, function updateView(){
-
-        this.elementState.reset('todolist:todoModel', '');
-
-        if (!tpl) tpl = this.elementState.getInnerHtml('todolist:tpl');
-        var replacedByData = tpl.replace('{item}', item.value);
-        var replacedByEventId = replacedByData.replace(/{id}/g, item.id);
-
-        this.elementState.append('todolist:tpl', replacedByEventId);
+    this.registerFor("todoModel").on("blur", function(){
+        this.state.todoModel = event.target.value;
+        this.state.event.publish('onTodoModelChange');
     });
 
-    this.onclick('done', function () {
-
+    this.registerFor("done").on('click', function(event){
+        this.state.todoList = this.state.todoList.filter(function(listItem){
+            listItem.id !== event.target.id;
+        })
+        this.state.event.publish('onTodoComplete');
     });
+});
 
-    this.targets = [];
-}
+bubbleFlow.createElementStateStateUpdater(function(){
+    this.initElementState = function(){
+        this.elementState.listItemTpl = document.getElementById('todoListTpl').innerHTML;
+    };
+
+    this.registerFor('todoListTpl').on('onItemAdded', function (){
+        var li = document.createElement('li');
+        li.innerHTML = bubble.parse(this.elementState.listItemTpl, this.state.todoModel);
+        this.elementState.listItemElement = li;
+    })
+});
+
+bubbleFlow.createViewUpdater(function(){
+    this.onTodoComplete =function(){
+        document.getElementById("todoListContainer").appendChild(this.elementState.listItemElement);
+    };
+
+    this.onTodoModelChange = function(){
+        document.getElementById("lblTodoModel").textContent = this.state.todoModel;
+    };
+
+    this.onItemAdded = function(){
+        document.getElementById("todoListContainer").appendChild(this.elementState.listItemElement);
+    };
+});

@@ -9,11 +9,12 @@
 
 <div id="todolist">
     <h1>Todo list example</h1>
-    <input type="text" id="todolist:todoModel" />
-    <input type="button" id="todolist:addTodo" value="Add Todo"/>
-    <input type="button" id="todolist:loadDefault" value="load default"/>
-    <ol id="todolist:ol">
-        <li id="todolist:tpl">
+    <input type="text" id="todoModel" />
+    <label id="lblTodoModel" data-value="todoModel"></label>
+    <input type="button" id="addTodo" value="Add Todo"/>
+    <input type="button" id="loadDefault" value="load default"/>
+    <ol id="todoListContainer">
+        <li id="todoListTpl">
             {item}
             <button id="todolist:done" data-id="{id}">done</button>
             --
