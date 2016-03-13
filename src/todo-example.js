@@ -55,3 +55,82 @@
     };
     ecstasy.register(todoListComponent);
 })();
+
+function stateUpdater(){
+
+    var actionFlow =["viewActions", "stateUpdaters", "viewUpdaters"];
+     this.viewActions = {
+         register: function(){
+
+         },
+         dispatch: function(){
+
+         }
+     };
+
+    this.viewActions.register("todoModel").on("click", function(){
+
+    });
+
+    this.stateUpdaters.register("todoModel").on("click", function(){
+
+    })
+
+    this.stateUpdaters = [];
+    this.stateValidators = [];
+
+}
+
+function stateValidator(){
+
+}
+
+function viewUpdater(){
+
+}
+
+function actionContainer(){
+
+}
+
+var toDoActions ={
+    onBlurTodoModel: function () {
+
+    }
+}
+
+function toDoListComponent() {
+    this.name = 'todoList';
+
+    this.initModelState = function () {
+        this.state.todolist = ['dhaka', 'rajshahi'];
+    };
+
+    this.onblur('todoModel', function updateModel (data) {
+        //need to update state
+
+        this.state.todoModel = data.todoModel;
+    }, function updateView(){
+        /* propagate other update */
+    });
+
+    this.onclick('addTodo', function updateModel () {
+        var listItem = {id: data.id, value: data.modelValue};
+        this.state.todolist.push(listItem);
+    }, function updateView(){
+
+        this.elementState.reset('todolist:todoModel', '');
+
+        if (!tpl) tpl = this.elementState.getInnerHtml('todolist:tpl');
+        var replacedByData = tpl.replace('{item}', item.value);
+        var replacedByEventId = replacedByData.replace(/{id}/g, item.id);
+
+        this.elementState.append('todolist:tpl', replacedByEventId);
+    });
+
+    this.onclick('done', function () {
+
+    });
+
+    this.targets = [];
+}
