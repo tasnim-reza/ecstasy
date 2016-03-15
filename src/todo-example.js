@@ -1,6 +1,6 @@
 bubbler.createModelStateUpdater(function () {
     this.initModelState = function () {
-        this.state.defaultModel ={id: 0, value: 'dhaka'};
+        this.state.defaultModel = {id: 0, value: 'dhaka'};
         this.state.todModel = '';
         this.state.todoList = [{id: 0, value: 'dhaka'}, {id: 0, value: 'rajshahi'}];
         this.state.event.publish('onInitModelState');
@@ -28,7 +28,7 @@ bubbler.createModelStateUpdater(function () {
 bubbler.createElementStateStateUpdater(function () {
     this.on('onInitModelState', function (event) {
         this.elementState.listItemTpl = document.getElementById('todoListTpl').innerHTML;
-        this.elementState.addedItems =[];
+        this.elementState.addedItems = [];
     });
 
     this.on('onItemAdded', function (event) {
@@ -37,7 +37,7 @@ bubbler.createElementStateStateUpdater(function () {
 
         li.innerHTML = bubbler.parse(this.elementState.listItemTpl, addedItem);
         this.elementState.listItemElement = li;
-        this.elementState.addedItems.push({id: addedItem.id, element:li});
+        this.elementState.addedItems.push({id: addedItem.id, element: li});
     });
 });
 
@@ -47,16 +47,16 @@ bubbler.createViewUpdater(function () {
         document.getElementById("todoListTpl").innerHTML = bubbler.parse(this.elementState.listItemTpl, addedItem);
         var li = document.getElementById("todoListTpl");
 
-        this.elementState.addedItems.push({id: addedItem.id, element:li});
+        this.elementState.addedItems.push({id: addedItem.id, element: li});
     });
 
     this.on('onTodoComplete', function (event) {
 
-        var child = this.elementState.addedItems.find(function(item){
+        var child = this.elementState.addedItems.find(function (item) {
             return item.id.toString() === event.target.dataset.id;
         });
 
-        this.elementState.addedItems = this.elementState.addedItems.filter(function(item){
+        this.elementState.addedItems = this.elementState.addedItems.filter(function (item) {
             return item.id.toString() !== event.target.dataset.id;
         });
         document.getElementById("todoListContainer").removeChild(child.element);

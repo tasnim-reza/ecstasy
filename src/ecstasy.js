@@ -3,26 +3,11 @@
  */
 (function bubbleFlow() {
 
-    var bubbleFlow = ["viewActions", "modelStateUpdaters", "elementStateUpdaters", "viewUpdaters"];
+    var bubbleFlow = ["modelStateUpdater", "elementStateUpdater", "viewUpdater"];
 
-    var participants = [];
+    var components = {};
     var events = {};
-    var state = {
-        event: {
-            publish: function (eventName, event) {
-                participants.forEach(function (item) {
-                    item.publish(eventName, event);
-                })
-            }
-        }
-    };
-    var elementState = {};
     var componentInit = {};
-    var states = {
-        state: state,
-        elementState: elementState
-    };
-
     var physicalDom = {
         'document': document,
         'body': document.body
@@ -37,6 +22,7 @@
 
     (function initBubbler() {
         addEventListeners();
+
         //lazy call
         setTimeout(function () {
             callInitMethods();
@@ -50,13 +36,18 @@
     }
 
     function callInitMethods() {
-        for (var key in componentInit) {
-            componentInit[key].call(states);
+        for (var key in components) {
+            var component = components[key];
+            component.participants.forEach(function (participant) {
+                if (participant['onInit'])
+                    participant['onInit'].call(component.state[key]);
+            });
+
         }
     }
 
     function eventHandler(event, element) {
-        var actionName = event.target.id + ':' + event.type;
+        var actionName = event.target.dataset.name + ':' + event.type;
         dispatch(actionName, event, element);
     }
 
@@ -91,13 +82,13 @@
 
             modelUpdater.apply(updater, []);
 
-            if (typeof(updater.initModelState) === 'function') {
-                componentInit['initModelState'] = updater.initModelState;
+            if (typeof(updater.onInit) === 'function') {
+                componentInit['initModelState'] = updater.onInit;
             }
 
             updater.publish = function (eventName, event) {
                 if (onEvents[eventName])
-                    onEvents[eventName].call(states,event);
+                    onEvents[eventName].call(states, event);
             }
 
             participants.push(updater);
@@ -118,8 +109,8 @@
 
             elementUpdater.apply(updater, []);
 
-            if (typeof(updater.initElementState) === 'function') {
-                componentInit['initElementState'] = updater.initElementState;
+            if (typeof(updater.onInit) === 'function') {
+                componentInit['initElementState'] = updater.onInit;
             }
 
             updater.publish = function (eventName, event) {
@@ -142,6 +133,49 @@
                     onEvents[eventName].call(states, event);
             }
             participants.push(updater);
+        },
+        createComponent: function (options) {
+            var component = physicalDom.document.getElementById(options.selector).innerHTML;
+            var participants = [];
+            var componentState = {};
+
+            componentState[options.selector] = getState();
+
+            options.targetSelectors.forEach(function (selector) {
+                componentState[selector] = getState();
+                physicalDom.document.getElementById(selector).innerHTML = component;
+                //options.create.apply(componentState[options.selector], []);
+            })
+
+            bubbleFlow.forEach(function (buble) {
+                var func = options[buble],
+                    updater = Object.create(func.prototype),
+                    key = '',
+                    onEvents = {};
+
+                updater.registerFor = function (elementId) {
+                    this.on = function on(eventName, callback) {
+                        key = elementId + ':' + eventName;
+                        events[key] = callback;
+                    };
+                    return this;
+                };
+
+                updater.on = function on(eventName, callback) {
+                    onEvents[eventName] = callback;
+                }
+
+                func.apply(updater, []);
+
+                updater.publish = function (eventName, event) {
+                    if (onEvents[eventName])
+                        onEvents[eventName].call(states, event);
+                }
+
+                participants.push(updater);
+            });
+
+            components[options.selector] = createComponentState(componentState, participants);
         }
     }
 
@@ -151,6 +185,30 @@
         var replacedByEventId = replacedByData.replace(/{id}/g, data.id);
 
         return replacedByEventId;
+    }
+
+    function getState() {
+        var state = Object.create(null);
+
+        state.event = {
+            publish: function (eventName, event) {
+                participants.forEach(function (item) {
+                    item.publish(eventName, event);
+                })
+            }
+        };
+
+        state.modelState = {};
+        state.elementState = {};
+
+        return state;
+    }
+
+    function createComponentState(componentState, participants) {
+        return {
+            state: componentState,
+            participants: participants
+        };
     }
 
     return this;
