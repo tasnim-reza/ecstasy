@@ -7,7 +7,7 @@ bubbler.createComponent({
     targetSelectors: ['counter1'],
     modelStateUpdater: function () {
         this.onInit = function () {
-            this.modelState.counter = 0;
+            this.modelState.counter = -1;
         };
 
         this.registerFor("increase").on("click", function () {
@@ -25,15 +25,15 @@ bubbler.createComponent({
     },
     viewUpdater: function () {
         this.onInit = function () {
-            this.element.get('counter').innerText = this.modelState.counter;
+            this.elementState.getElement(this, 'counter').innerText = this.modelState.counter;
         }
 
         this.on('onIncrease', function () {
-            this.element.get('counter').innerText = this.modelState.counter;
+            this.elementState.getElement('counter').innerText = this.modelState.counter;
         })
 
         this.on('onDecrease', function () {
-            this.element.get('counter').innerText = this.modelState.counter;
+            this.elementState.getElement('counter').innerText = this.modelState.counter;
         })
     }
 });
