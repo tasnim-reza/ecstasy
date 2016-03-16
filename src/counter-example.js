@@ -3,8 +3,8 @@
  */
 
 bubbler.createComponent({
-    selector: 'counter',
-    targetSelectors: ['counter1'],
+    name: 'counter',
+    templateSelector: 'counter',
     modelStateUpdater: function () {
         this.onInit = function () {
             this.modelState.counter = -1;
@@ -37,3 +37,10 @@ bubbler.createComponent({
         })
     }
 });
+
+/*
+
+bubbler.renderComponent('component name', 'selectorId')
+*/
+
+bubbler.loadComponent('counter', ['counter1'])
