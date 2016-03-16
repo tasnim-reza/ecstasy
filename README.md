@@ -13,6 +13,8 @@ Ecstasy is a client side application framework. What if we have only single even
 
 ## Structure
 
+![bubble flow structure](https://github.com/tasnim-reza/ecstasy/raw/master/site/img/bubble-flow.png "bubble flow structure")
+
  onclick event -> single event listener -> single state -> action handler/state mutator/view updater
 
 
