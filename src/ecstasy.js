@@ -5,16 +5,12 @@
 
     var bubbleFlow = ["modelStateUpdater", "elementStateUpdater", "viewUpdater"];
 
-    var components = {};
-    var componentState = {};
-    var componentsAsString = {};
-    var events = {};
-    var componentInit = {};
+    var participants = {},
+        components = {};
     var physicalDom = {
         'document': document,
         'body': document.body
     };
-    var modelRefs = {};
     var participants = [];
 
     var browserEvents = {
@@ -29,7 +25,7 @@
 
         //lazy call
         setTimeout(function () {
-            //callInitMethods();
+            callInitMethods();
         });
     })();
 
@@ -40,88 +36,99 @@
     }
 
     function callInitMethods() {
-        for (var key in components) {
-            var component = components[key];
-            component.participants.forEach(function (participant) {
-                if (participant['onInit'])
-                    participant['onInit'].call(component.state[key]);
+        for (var key in participants) {
+            var participant = participants[key];
+            participant.bubbles.forEach(function (bubble) {
+                if (bubble['onInit'])
+                    bubble['onInit'].call(participant.state, participant.dom);
             });
-
         }
     }
 
-    function eventHandler(event, element) {
-        var actionName = event.target.dataset.id + ':' + event.type;
-        dispatch(actionName, event, element);
+    function eventHandler(event) {
+        if (!event.target.dataset.event) {
+            console.log('not interested action: ', event.type);
+            return;
+        }
+        var token = event.target.id.split(':'),
+            bubbleName = token[0],
+            participant= participants[bubbleName],
+            eventName= token[1],
+            actionName = eventName + ':' + event.type;
+        dispatch(participant, actionName, event);
     }
 
-    function dispatch(actionName, event, element) {
-        if (!events[actionName]) {
-            console.log('unhandled action: ', actionName);
+    function dispatch(participant, actionName, event) {
+        if (!participant.state.events[actionName]) {
+            console.log('unregistered action: ', actionName);
             return;
         } else {
             console.log('handled action: ', actionName);
         }
-        events[actionName].call(componentState['counter'], event, element);
+
+        participant.state.events[actionName].call(participant.state, event);
     }
 
     this.bubbler = {
-        createComponent: function (options) {
-            components[options.name] = options;
+        createReusableComponent: function (options, selector) {
+            components[options.name] = createComponentLite(options);
+            if(selector)
+                this.loadComponent(options.name, [selector]);
+        },
+
+        createComponent: function(options){
+            components[options.name] = createComponentLite(options);
+            renderComponent(components[options.name], options.templateSelector);
+
         },
 
         loadComponent: function (componentName, selectors) {
+            var componentLite = components[componentName],
+                isReusableComponent = true;
             selectors.forEach(function (selector) {
-                var options = components[componentName];
-
-                renderComponent(options, selector, state);
+                renderComponent(componentLite, selector, isReusableComponent);
             })
         }
     }
 
-    function renderComponent(options, targetSelector, state){
-        var componentElm = physicalDom.document.getElementById(options.templateSelector),
-            componentTpl = componentElm.innerHTML;
-
-        //modelRefs[selector] = componentElm.querySelectorAll('[data-model]');
-
-        var participants = [];
-        var componentState = {};
+    function renderComponent(componentLite, targetSelector, isReusableComponent){
+        var options = componentLite.options,
+            bubbleList = [],
+            state = getState(targetSelector);
 
         bubbleFlow.forEach(function (buble) {
             var func = options[buble],
-                updater = Object.create(func.prototype),
-                key = '',
-                onEvents = {};
+                updater = Object.create(func.prototype);
 
             updater.registerFor = function (elementId) {
                 this.on = function on(eventName, callback) {
-                    key = elementId + ':' + eventName;
-                    events[key] = callback;
+                    var key = elementId + ':' + eventName;
+                    state.events[key] = callback;
                 };
                 return this;
             };
 
             updater.on = function on(eventName, callback) {
-                onEvents[eventName] = callback;
+                state.pubSub.onEvents[eventName] = callback;
             }
 
             func.apply(updater, []);
 
-            updater.publish = function (eventName, event) {
-                if (onEvents[eventName])
-                    onEvents[eventName].call(states, event);
-            }
-
-            participants.push(updater);
-
+            bubbleList.push(updater);
         });
 
-        physicalDom.document.getElementById(targetSelector).innerHTML = componentTpl;
+        var dom = manipulateDom(componentLite, targetSelector, isReusableComponent);
 
-        components[selector] = createComponentState(getState(targetSelector), participants)
+        if(isReusableComponent) {
+            physicalDom.document.getElementById(targetSelector).appendChild(dom.templateDom);
+        }
+
+        participants[targetSelector]={
+            state: state,
+            bubbles: bubbleList,
+            dom: dom
+        };
     }
-
     //utility methods
     bubbler.parse = function (tpl, data) {
         var replacedByData = tpl.replace('{item}', data.value);
@@ -134,11 +141,19 @@
         var state = Object.create(null);
 
         state.selector = selector;
-        state.event = {
+        state.events={};
+        state.pubSub = {
+            onEvents:{},
             publish: function (eventName, event) {
-                participants.forEach(function (item) {
-                    item.publish(eventName, event);
-                })
+                for(var key in participants){
+                    var item = participants[key];
+                    item.bubbles.forEach(function(bubble){
+                        if(state.pubSub.onEvents[eventName]){
+                            var dom = participants[state.selector].dom;
+                            state.pubSub.onEvents[eventName].call(state, dom);
+                        }
+                    })
+                }
             }
         };
 
@@ -154,11 +169,48 @@
         return state;
     }
 
-    function createComponentState(componentState, participants) {
+    function createComponentLite(options) {
         return {
-            state: componentState,
-            participants: participants
+            options: options,
+            domAsString:{
+                innerHtml: physicalDom.document.getElementById(options.templateSelector).innerHTML
+            }
         };
+    }
+
+    function manipulateDom(componentLite, targetSelector, isReusableComponent){
+        var componentElm = physicalDom.document.getElementById(componentLite.options.templateSelector);
+
+        if(isReusableComponent) {
+            var componentTpl = componentLite.domAsString.innerHtml,
+                //parsed = componentTpl.replace(/counter/g, targetSelector),
+                temp = physicalDom.document.createElement('div');
+                temp.id = targetSelector;
+                temp.innerHTML = componentTpl;
+        }else{
+            temp = componentElm;
+        }
+
+        var flattenDom = {};
+        doFlattenAndRegister(temp, flattenDom);
+
+        flattenDom.templateDom = temp;
+        flattenDom.selector = targetSelector;
+
+        return flattenDom;
+    }
+
+    function doFlattenAndRegister(domElement, flattenDom){
+        for(var key in domElement.children){
+            if(domElement.children.hasOwnProperty(key)){
+                var child = domElement.children[key];
+                if(child.children.length>0) doFlattenAndRegister(child, flattenDom);
+
+                //set unique id
+                child.id= domElement.id + ':' + child.id;
+                flattenDom[child.id] = child;
+            }
+        }
     }
 
     return this;
