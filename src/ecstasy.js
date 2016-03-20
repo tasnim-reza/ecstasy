@@ -7,6 +7,7 @@
 
     var participants = {},
         components = {};
+
     var physicalDom = {
         'document': document,
         'body': document.body
@@ -29,12 +30,6 @@
         });
     })();
 
-    function addEventListeners() {
-        for (var key in browserEvents) {
-            physicalDom.body.addEventListener(browserEvents[key], eventHandler, true)
-        }
-    }
-
     function callInitMethods() {
         for (var key in participants) {
             var participant = participants[key];
@@ -45,11 +40,17 @@
         }
     }
 
-    function eventHandler(event) {
-        if (!event.target.dataset.event) {
-            console.log('not interested action: ', event.type);
-            return;
+    function addEventListeners() {
+        for (var key in browserEvents) {
+            physicalDom.body.addEventListener(browserEvents[key], eventHandler, true)
         }
+    }
+
+    function eventHandler(event) {
+        //if (!event.target.dataset.event) {
+        //    console.log('not interested action: ', event.type);
+        //    return;
+        //}
         var token = event.target.id.split(':'),
             bubbleName = token[0],
             participant= participants[bubbleName],
@@ -82,11 +83,14 @@
 
         },
 
-        loadComponent: function (componentName, selectors) {
+        /*
+         targetSelectors: where the component will be loaded.
+         */
+        loadComponent: function (componentName, targetSelectors) {
             var componentLite = components[componentName],
                 isReusableComponent = true;
-            selectors.forEach(function (selector) {
-                renderComponent(componentLite, selector, isReusableComponent);
+            targetSelectors.forEach(function (targetSelector) {
+                renderComponent(componentLite, targetSelector, isReusableComponent);
             })
         }
     }
@@ -129,6 +133,7 @@
             dom: dom
         };
     }
+
     //utility methods
     bubbler.parse = function (tpl, data) {
         var replacedByData = tpl.replace('{item}', data.value);
@@ -179,28 +184,44 @@
     }
 
     function manipulateDom(componentLite, targetSelector, isReusableComponent){
-        var componentElm = physicalDom.document.getElementById(componentLite.options.templateSelector);
+        var options = componentLite.options,
+            elementSelector = options.elementSelector,
+            templateSelector = options.templateSelector;
+            //componentElm = physicalDom.document.getElementById(templateSelector);
 
-        if(isReusableComponent) {
-            var componentTpl = componentLite.domAsString.innerHtml,
-                //parsed = componentTpl.replace(/counter/g, targetSelector),
-                temp = physicalDom.document.createElement('div');
-                temp.id = targetSelector;
-                temp.innerHTML = componentTpl;
-        }else{
-            temp = componentElm;
-        }
+        //if(isReusableComponent) {
+        //    var componentTpl = componentLite.domAsString.innerHtml,
+        //        //parsed = componentTpl.replace(/counter/g, targetSelector),
+        //        temp = physicalDom.document.createElement('div');
+        //        temp.id = targetSelector;
+        //        temp.innerHTML = componentTpl;
+        //}else{
+        //    temp = componentElm;
+        //}
 
         var flattenDom = {};
-        doFlattenAndRegister(temp, flattenDom);
 
-        flattenDom.templateDom = temp;
+        if(elementSelector){
+            flattenDom.element ={}
+            doFlattenAndRegister(physicalDom.document.getElementById(elementSelector), flattenDom.element);
+        }
+
+        if(templateSelector){
+            flattenDom.template ={}
+            doFlattenAndRegister(physicalDom.document.getElementById(templateSelector), flattenDom.template);
+        }
+
         flattenDom.selector = targetSelector;
 
         return flattenDom;
     }
 
     function doFlattenAndRegister(domElement, flattenDom){
+        if(domElement.type === "text/bubble"){
+            flattenDom['scriptDom'] = domElement;
+            return;
+        }
+
         for(var key in domElement.children){
             if(domElement.children.hasOwnProperty(key)){
                 var child = domElement.children[key];
