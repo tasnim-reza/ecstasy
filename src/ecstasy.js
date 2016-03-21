@@ -47,15 +47,18 @@
     }
 
     function eventHandler(event) {
-        //if (!event.target.dataset.event) {
-        //    console.log('not interested action: ', event.type);
-        //    return;
-        //}
+
         var token = event.target.id.split(':'),
             bubbleName = token[0],
             participant= participants[bubbleName],
             eventName= token[1],
             actionName = eventName + ':' + event.type;
+
+        if (!participant) {
+            console.log('not interested action: ', actionName);
+            return;
+        }
+
         dispatch(participant, actionName, event);
     }
 
@@ -236,21 +239,3 @@
 
     return this;
 })();
-
-/*
- screen view area. if a dom is changed in unseen area
- we actually don't need to change immediately.
- multiple view area. we can prepare multiple view area.
- but we do always only three
- current and next
- if user moved to next then we preserve the old one.
- do we actually need all the manipulated dom persist in browser ? NO
-
- this.element.createNode('a')
- .addAttribute('data-id',1)
- .addEventListener('onclcik','console.log('call')')
- .render();
-
-
- <a data-id="1" onclick="console.log('call') />
- */

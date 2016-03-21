@@ -2,10 +2,11 @@ bubbler.createComponent({
     name: 'todo',
     elementSelector: 'todo',
     templateSelector: 'todoTpl',
+
     modelStateUpdater: function () {
         this.onInit = function () {
             this.modelState.todModel = '';
-            this.modelState.todoList = [{id: 0, value: 'Call raf'}, {id: 1, value: 'Buy cold milk'}];
+            this.modelState.todoList = [{id: 0, value: 'Call raf'}, {id: 1, value: 'Buy some drinks'}];
             this.pubSub.publish('onInitModelState');
         };
 
