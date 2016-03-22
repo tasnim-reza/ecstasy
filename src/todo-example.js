@@ -11,13 +11,15 @@ bubbler.createComponent({
         };
 
         this.registerFor("addTodo").on("click", function (event) {
-            var listItem = {id: this.modelState.todoList.length + 1, value: this.modelState.todoModel};
-            this.modelState.todoList.push(listItem);
+            this.modelState.todoList.push(this.modelState.todoModel);
             this.pubSub.publish('onItemAdded');
         });
 
         this.registerFor("todoModel").on("blur", function (event) {
-            this.modelState.todoModel = event.target.value;
+            this.modelState.todoModel = {
+                id: this.modelState.todoList.length + 1,
+                value: event.target.value
+            };
         });
 
         this.registerFor("done").on('click', function (event) {
@@ -74,7 +76,11 @@ bubbler.createComponent({
         });
 
         this.on('onItemAdded', function (dom) {
-            document.getElementById("todoListContainer").appendChild(this.elementState.listItemElement);
+            var li = document.createElement('li');
+            li.innerHTML = dom.template.scriptDom.innerHTML
+            li.children[0].textContent = this.modelState.todoModel.value;
+
+            dom.element["todo:todoContainer"].appendChild(li);
         });
     }
 });

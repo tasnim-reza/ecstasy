@@ -3,23 +3,19 @@
  */
 (function bubbleFlow() {
 
-    var bubbleFlow = ["modelStateUpdater", "elementStateUpdater", "viewUpdater"];
-
-    var participants = {},
-        components = {};
-
-    var physicalDom = {
-        'document': document,
-        'body': document.body
-    };
-    var participants = [];
-
-    var browserEvents = {
-        'onclick': 'click',
-        'onmousedown': 'mousedown',
-        'onkeyup': 'keyup',
-        'onblur': 'blur'
-    };
+    var bubbleFlow = ["modelStateUpdater", "elementStateUpdater", "viewUpdater"],
+        participants = {},
+        components = {},
+        physicalDom = {
+            'document': document,
+            'body': document.body
+        },
+        browserEvents = {
+            'onclick': 'click',
+            'onmousedown': 'mousedown',
+            'onkeyup': 'keyup',
+            'onblur': 'blur'
+        };
 
     (function initBubbler() {
         addEventListeners();
@@ -82,7 +78,7 @@
 
         createComponent: function(options){
             components[options.name] = createComponentLite(options);
-            renderComponent(components[options.name], options.templateSelector);
+            renderComponent(components[options.name], options.elementSelector);
 
         },
 
@@ -100,8 +96,24 @@
 
     function renderComponent(componentLite, targetSelector, isReusableComponent){
         var options = componentLite.options,
-            bubbleList = [],
-            state = getState(targetSelector);
+            state = getState(targetSelector),
+            bubbleList = getRegisteredBubbles(state, options);
+
+        var dom = manipulateDom(componentLite, targetSelector, isReusableComponent);
+
+        if(isReusableComponent) {
+            physicalDom.document.getElementById(targetSelector).appendChild(dom.templateDom);
+        }
+
+        participants[targetSelector]={
+            state: state,
+            bubbles: bubbleList,
+            dom: dom
+        };
+    }
+
+    function getRegisteredBubbles(state, options){
+        var bubbleList = [];
 
         bubbleFlow.forEach(function (buble) {
             var func = options[buble],
@@ -124,17 +136,7 @@
             bubbleList.push(updater);
         });
 
-        var dom = manipulateDom(componentLite, targetSelector, isReusableComponent);
-
-        if(isReusableComponent) {
-            physicalDom.document.getElementById(targetSelector).appendChild(dom.templateDom);
-        }
-
-        participants[targetSelector]={
-            state: state,
-            bubbles: bubbleList,
-            dom: dom
-        };
+        return bubbleList;
     }
 
     //utility methods
@@ -153,14 +155,9 @@
         state.pubSub = {
             onEvents:{},
             publish: function (eventName, event) {
-                for(var key in participants){
-                    var item = participants[key];
-                    item.bubbles.forEach(function(bubble){
-                        if(state.pubSub.onEvents[eventName]){
-                            var dom = participants[state.selector].dom;
-                            state.pubSub.onEvents[eventName].call(state, dom);
-                        }
-                    })
+                if(state.pubSub.onEvents[eventName]){
+                    var dom = participants[state.selector].dom;
+                    state.pubSub.onEvents[eventName].call(state, dom);
                 }
             }
         };
