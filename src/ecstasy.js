@@ -1,7 +1,10 @@
 /**
  * Created by Reza on 11-3-16.
  */
-(function bubbleFlow() {
+
+'use strict';
+
+(function bubbleFlow(window, document) {
 
     var bubbleFlow = ["modelStateUpdater", "elementStateUpdater", "viewUpdater"],
         participants = {},
@@ -46,8 +49,8 @@
 
         var token = event.target.id.split(':'),
             bubbleName = token[0],
-            participant= participants[bubbleName],
-            eventName= token[1],
+            participant = participants[bubbleName],
+            eventName = token[1],
             actionName = eventName + ':' + event.type;
 
         if (!participant) {
@@ -69,17 +72,18 @@
         participant.state.events[actionName].call(participant.state, event);
     }
 
-    this.bubbler = {
+    window.bubbler = {
         createReusableComponent: function (options, selector) {
             components[options.name] = createComponentLite(options);
-            if(selector)
+            if (selector)
                 this.loadComponent(options.name, [selector]);
         },
 
-        createComponent: function(options){
-            components[options.name] = createComponentLite(options);
-            renderComponent(components[options.name], options.elementSelector);
-
+        createComponent: function (options, selectors) {
+            selectors.forEach(function(selector){
+                new CreateComponent(options);
+                participants[selector] = components[options.name];
+            });
         },
 
         /*
@@ -94,49 +98,21 @@
         }
     }
 
-    function renderComponent(componentLite, targetSelector, isReusableComponent){
-        var options = componentLite.options,
-            state = getState(targetSelector),
-            bubbleList = getRegisteredBubbles(state, options);
+    function renderComponent(componentLite, targetSelector, isReusableComponent) {
+        var options = componentLite.options;
+
 
         var dom = manipulateDom(componentLite, targetSelector, isReusableComponent);
 
-        if(isReusableComponent) {
+        if (isReusableComponent) {
             physicalDom.document.getElementById(targetSelector).appendChild(dom.templateDom);
         }
 
-        participants[targetSelector]={
+        participants[targetSelector] = {
             state: state,
             bubbles: bubbleList,
             dom: dom
         };
-    }
-
-    function getRegisteredBubbles(state, options){
-        var bubbleList = [];
-
-        bubbleFlow.forEach(function (buble) {
-            var func = options[buble],
-                updater = Object.create(func.prototype);
-
-            updater.registerFor = function (elementId) {
-                this.on = function on(eventName, callback) {
-                    var key = elementId + ':' + eventName;
-                    state.events[key] = callback;
-                };
-                return this;
-            };
-
-            updater.on = function on(eventName, callback) {
-                state.pubSub.onEvents[eventName] = callback;
-            }
-
-            func.apply(updater, []);
-
-            bubbleList.push(updater);
-        });
-
-        return bubbleList;
     }
 
     //utility methods
@@ -147,92 +123,103 @@
         return replacedByEventId;
     }
 
-    function getState(selector) {
-        var state = Object.create(null);
+    function CreateComponent(options){
+        var componentState = new ComponentState(options);
+        var componentDomLite = new ComponentDomLite(options);
 
-        state.selector = selector;
-        state.events={};
-        state.pubSub = {
-            onEvents:{},
-            publish: function (eventName, event) {
-                if(state.pubSub.onEvents[eventName]){
-                    var dom = participants[state.selector].dom;
-                    state.pubSub.onEvents[eventName].call(state, dom);
+        components[options.name] = Object.assign(componentState, componentDomLite);
+
+        function ComponentState(options) {
+            var state = new State(),
+                bubbleList = getRegisteredBubbles(state, options);
+            return {
+                state: state,
+                bubbles: bubbleList
+            };
+
+            function State(selector) {
+                var state = Object.create(null);
+
+                state.selector = selector;
+                state.events = {};
+                state.pubSub = {
+                    onEvents: {},
+                    publish: function (eventName, event) {
+                        if (state.pubSub.onEvents[eventName]) {
+                            //ToDo: should send specific dom instead componentDomLite
+                            //var dom = participants[state.selector].dom;
+                            state.pubSub.onEvents[eventName].call(state, componentDomLite);
+                        }
+                    }
+                };
+
+                state.modelState = {};
+                state.elementState = {
+                    getElement: function (s, id) {
+                        var models = modelRefs[s.selector];
+
+                        return models;
+                    }
+                };
+
+                return state;
+            }
+
+            function getRegisteredBubbles(state, options) {
+                var bubbleList = [];
+
+                bubbleFlow.forEach(function (buble) {
+                    if (!options[buble]) return;
+
+                    var func = options[buble],
+                        updater = Object.create(func.prototype);
+
+                    updater.registerFor = function (elementId) {
+                        this.on = function on(eventName, callback) {
+                            var key = elementId + ':' + eventName;
+                            state.events[key] = callback;
+                        };
+                        return this;
+                    };
+
+                    updater.on = function on(eventName, callback) {
+                        state.pubSub.onEvents[eventName] = callback;
+                    }
+
+                    func.apply(updater, []);
+
+                    bubbleList.push(updater);
+                });
+
+                return bubbleList;
+            }
+        }
+
+        function ComponentDomLite(option) {
+            var flattenDom = Object.create(null),
+                domElement = physicalDom.document.getElementById(option.selector);
+            if (!domElement) throw "No dom element found, for component: " + option.name + " , selector: " + option.selector;
+
+            doFlattenDom(domElement, flattenDom);
+            return flattenDom;
+
+            function doFlattenDom(domElement, flattenDom) {
+                if (domElement.type === "text/bubble") {
+                    flattenDom['scriptDom'] = domElement;
+                    return;
+                }
+
+                for (var key in domElement.children) {
+                    if (domElement.children.hasOwnProperty(key)) {
+                        var child = domElement.children[key];
+                        if (child.children.length > 0) doFlattenDom(child, flattenDom);
+
+                        //set unique id
+                        child.id = domElement.id + ':' + child.id;
+                        flattenDom[child.id] = child;
+                    }
                 }
             }
-        };
-
-        state.modelState = {};
-        state.elementState = {
-            getElement: function (s, id) {
-                var models = modelRefs[s.selector];
-
-                return models;
-            }
-        };
-
-        return state;
-    }
-
-    function createComponentLite(options) {
-        return {
-            options: options,
-            domAsString:{
-                innerHtml: physicalDom.document.getElementById(options.templateSelector).innerHTML
-            }
-        };
-    }
-
-    function manipulateDom(componentLite, targetSelector, isReusableComponent){
-        var options = componentLite.options,
-            elementSelector = options.elementSelector,
-            templateSelector = options.templateSelector;
-            //componentElm = physicalDom.document.getElementById(templateSelector);
-
-        //if(isReusableComponent) {
-        //    var componentTpl = componentLite.domAsString.innerHtml,
-        //        //parsed = componentTpl.replace(/counter/g, targetSelector),
-        //        temp = physicalDom.document.createElement('div');
-        //        temp.id = targetSelector;
-        //        temp.innerHTML = componentTpl;
-        //}else{
-        //    temp = componentElm;
-        //}
-
-        var flattenDom = {};
-
-        if(elementSelector){
-            flattenDom.element ={}
-            doFlattenAndRegister(physicalDom.document.getElementById(elementSelector), flattenDom.element);
-        }
-
-        if(templateSelector){
-            flattenDom.template ={}
-            doFlattenAndRegister(physicalDom.document.getElementById(templateSelector), flattenDom.template);
-        }
-
-        flattenDom.selector = targetSelector;
-
-        return flattenDom;
-    }
-
-    function doFlattenAndRegister(domElement, flattenDom){
-        if(domElement.type === "text/bubble"){
-            flattenDom['scriptDom'] = domElement;
-            return;
-        }
-
-        for(var key in domElement.children){
-            if(domElement.children.hasOwnProperty(key)){
-                var child = domElement.children[key];
-                if(child.children.length>0) doFlattenAndRegister(child, flattenDom);
-
-                //set unique id
-                child.id= domElement.id + ':' + child.id;
-                flattenDom[child.id] = child;
-            }
         }
     }
-
-    return this;
-})();
+})(window, document);

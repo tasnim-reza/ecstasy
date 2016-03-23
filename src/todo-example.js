@@ -1,7 +1,6 @@
 bubbler.createComponent({
-    name: 'todo',
-    elementSelector: 'todo',
-    templateSelector: 'todoTpl',
+    name: 'myTodo',
+    selector: 'todo',
 
     modelStateUpdater: function () {
         this.onInit = function () {
@@ -52,12 +51,16 @@ bubbler.createComponent({
                     id: listItem.id,
                     value: listItem.value
                 };
+                var tpl = document.importNode(dom["todoContainer:todoTpl"].content, true);
+                tpl.querySelector('#valueTodoModel').textContent = addedItem.value;
 
-                var li = document.createElement('li');
-                li.innerHTML = dom.template.scriptDom.innerHTML
-                li.children[0].textContent = listItem.value;
 
-                dom.element["todo:todoContainer"].appendChild(li);
+
+                //var li = document.createElement('li');
+                //li.innerHTML =
+                //li.children[0].textContent = listItem.value;
+
+                dom["todo:todoContainer"].appendChild(tpl);
 
             })
         });
@@ -76,12 +79,11 @@ bubbler.createComponent({
         });
 
         this.on('onItemAdded', function (dom) {
-            var li = document.createElement('li');
-            li.innerHTML = dom.template.scriptDom.innerHTML
-            li.children[0].textContent = this.modelState.todoModel.value;
+            var tpl = document.importNode(dom["todoContainer:todoTpl"].content, true);
+            tpl.querySelector('#valueTodoModel').textContent = this.modelState.todoModel.value;
 
-            dom.element["todo:todoContainer"].appendChild(li);
+            dom["todo:todoContainer"].appendChild(tpl);
         });
     }
-});
+}, ['todo']);
 
