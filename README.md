@@ -25,7 +25,7 @@ OH NOO !! single event listener !! that is horrible, that is a MESS
 Lets break some rule, We have only one event listener
         
     
-    `browserEvents = {
+    browserEvents = {
          'onclick': 'click',
          'onmousedown': 'mousedown',
          'onkeyup': 'keyup',
@@ -34,19 +34,20 @@ Lets break some rule, We have only one event listener
     };
     for (var key in browserEvents) {
         physicalDom.body.addEventListener(browserEvents[key], eventHandler, true)
-    }`        
+    }        
     
 then how we can dispatch those events ?
 
-    `<div id="todo">
+    <div id="todo">
         <input id="todo:addTodo" type="button" value="Add Todo"/>
         ....
     </div>
     
 We need a place where we can map the html element to eventHandler. We maintain a single event storage where all the eventHandlers can be subscribed.
-    `events['todo:addTodo'] = function(event){
+
+    events['todo:addTodo'] = function(event){
         console.log('add todo clicked !!')
-     }`
+    }
 
 
 
