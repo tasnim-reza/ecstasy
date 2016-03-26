@@ -128,6 +128,7 @@
         var componentDomLite = new ComponentDomLite(options);
 
         components[options.name] = Object.assign(componentState, componentDomLite);
+        console.log('component', components[options.name]);
 
         function ComponentState(options) {
             var state = new State(),
@@ -197,26 +198,25 @@
 
         function ComponentDomLite(option) {
             var flattenDom = Object.create(null),
+                domAsString = {},
                 domElement = physicalDom.document.getElementById(option.selector);
             if (!domElement) throw "No dom element found, for component: " + option.name + " , selector: " + option.selector;
 
-            doFlattenDom(domElement, flattenDom);
+            doFlattenDom(domElement.id, domElement, flattenDom, domAsString);
+            flattenDom.domAsString =domAsString;
             return flattenDom;
 
-            function doFlattenDom(domElement, flattenDom) {
-                if (domElement.type === "text/bubble") {
-                    flattenDom['scriptDom'] = domElement;
-                    return;
-                }
-
+            function doFlattenDom(componentId, domElement, flattenDom, domAsString) {
                 for (var key in domElement.children) {
                     if (domElement.children.hasOwnProperty(key)) {
                         var child = domElement.children[key];
-                        if (child.children.length > 0) doFlattenDom(child, flattenDom);
+                        if (child.children.length > 0) doFlattenDom(componentId, child, flattenDom, domAsString);
 
                         //set unique id
-                        child.id = domElement.id + ':' + child.id;
-                        flattenDom[child.id] = child;
+                        var id = componentId + ':' + child.id;
+                        child.id = id;
+                        flattenDom[id] = child;
+                        domAsString[id] =child.outerHTML;
                     }
                 }
             }

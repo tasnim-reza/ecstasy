@@ -51,7 +51,7 @@ bubbler.createComponent({
                     id: listItem.id,
                     value: listItem.value
                 };
-                var tpl = document.importNode(dom["todoContainer:todoTpl"].content, true);
+                var tpl = document.importNode(dom["todo:todoTpl"].content, true);
                 tpl.querySelector('#valueTodoModel').textContent = addedItem.value;
 
 
