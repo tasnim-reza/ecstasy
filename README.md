@@ -26,8 +26,8 @@ we need to learn new syntax, the following items are awesome :)
  
   1. Minimal size
   2. Minimal syntactic sugar !
-  3. Take the benefit that others already taken.
-  4. and see what we have to lost to achieve those goal.
+  3. Take the benefit that others already have.
+  4. and do we have to loose anything to achieve those goals.
    
 ## Single Event listener
 

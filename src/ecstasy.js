@@ -122,7 +122,9 @@
 
         return replacedByEventId;
     }
-
+    bubbler.isEmptyObject = function(obj){
+        return Object.keys(obj).length === 0 && JSON.stringify(obj) === JSON.stringify({});
+    }
     function CreateComponent(options){
         var componentState = new ComponentState(options);
         var componentDomLite = new ComponentDomLite(options);
@@ -216,7 +218,8 @@
                         var id = componentId + ':' + child.id;
                         child.id = id;
                         flattenDom[id] = child;
-                        domAsString[id] =child.outerHTML;
+                        if(!bubbler.isEmptyObject(child.dataset))
+                            domAsString[id] =child.outerHTML;
                     }
                 }
             }

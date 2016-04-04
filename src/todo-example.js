@@ -60,6 +60,8 @@ bubbler.createComponent({
                 //li.innerHTML =
                 //li.children[0].textContent = listItem.value;
 
+
+                //dom.todoContainer.appendChild(dom.todoTpl, obj);
                 dom["todo:todoContainer"].appendChild(tpl);
 
             })
