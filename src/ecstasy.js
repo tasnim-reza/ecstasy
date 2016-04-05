@@ -30,13 +30,13 @@
     })();
 
     function callInitMethods() {
-        for (var key in participants) {
+        Object.keys(participants).forEach(function(key){
             var participant = participants[key];
             participant.bubbles.forEach(function (bubble) {
                 if (bubble['onInit'])
-                    bubble['onInit'].call(participant.state, participant.dom);
+                    bubble['onInit'].call(participant.state);
             });
-        }
+        });
     }
 
     function addEventListeners() {
@@ -115,19 +115,9 @@
         };
     }
 
-    //utility methods
-    bubbler.parse = function (tpl, data) {
-        var replacedByData = tpl.replace('{item}', data.value);
-        var replacedByEventId = replacedByData.replace(/{id}/g, data.id);
-
-        return replacedByEventId;
-    }
-    bubbler.isEmptyObject = function(obj){
-        return Object.keys(obj).length === 0 && JSON.stringify(obj) === JSON.stringify({});
-    }
     function CreateComponent(options){
         var componentState = new ComponentState(options);
-        var componentDomLite = new ComponentDomLite(options);
+        var componentDomLite = new ComponentDomLite(options, componentState.state);
 
         components[options.name] = Object.assign(componentState, componentDomLite);
         console.log('component', components[options.name]);
@@ -157,15 +147,13 @@
                 };
 
                 state.modelState = {};
-                state.elementState = {
-                    getElement: function (s, id) {
-                        var models = modelRefs[s.selector];
-
-                        return models;
-                    }
-                };
+                state.domState = new DomState();
 
                 return state;
+            }
+
+            function DomState(){
+
             }
 
             function getRegisteredBubbles(state, options) {
@@ -198,31 +186,66 @@
             }
         }
 
-        function ComponentDomLite(option) {
+        function ComponentDomLite(option, state) {
             var flattenDom = Object.create(null),
                 domAsString = {},
                 domElement = physicalDom.document.getElementById(option.selector);
             if (!domElement) throw "No dom element found, for component: " + option.name + " , selector: " + option.selector;
 
-            doFlattenDom(domElement.id, domElement, flattenDom, domAsString);
+            doFlattenDom(domElement.id, domElement, flattenDom, state.domState, new DomMethod());
             flattenDom.domAsString =domAsString;
             return flattenDom;
 
-            function doFlattenDom(componentId, domElement, flattenDom, domAsString) {
+            function doFlattenDom(componentId, domElement, flattenDom, domState, domMethod) {
                 for (var key in domElement.children) {
                     if (domElement.children.hasOwnProperty(key)) {
                         var child = domElement.children[key];
                         if (child.children.length > 0) doFlattenDom(componentId, child, flattenDom, domAsString);
 
+                        //todo: don't need to create each dom method
+                        domState[child.id] = new DomMethod(child);
                         //set unique id
                         var id = componentId + ':' + child.id;
                         child.id = id;
                         flattenDom[id] = child;
-                        if(!bubbler.isEmptyObject(child.dataset))
-                            domAsString[id] =child.outerHTML;
+                        // if(!bubbler.isEmptyObject(child.dataset))
+                        //     domAsString[id] =child.outerHTML;
                     }
+                }
+            }
+
+            function DomMethod(element){
+                this.removeChild = function(){
+                    console.log('called remove child')
+                }
+
+                this.appendChild = function(){
+                    console.log('called appendChild')
+                }
+
+                this.appendChilds = function (tpl, items) {
+
+                    items.forEach(function(item){
+                        var tpl = document.importNode(flattenDom["todo:todoTpl"].content, true);
+                        tpl.querySelector('#valueTodoModel').textContent = item.value;
+                        element.appendChild(tpl);
+                    })
+                    console.log('called appendChilds', element, tpl, items)
                 }
             }
         }
     }
+
+    //utility methods
+    bubbler.parse = function (tpl, data) {
+        var replacedByData = tpl.replace('{item}', data.value);
+        var replacedByEventId = replacedByData.replace(/{id}/g, data.id);
+
+        return replacedByEventId;
+    }
+    bubbler.isEmptyObject = function(obj){
+        return Object.keys(obj).length === 0 && JSON.stringify(obj) === JSON.stringify({});
+    }
+
+
 })(window, document);

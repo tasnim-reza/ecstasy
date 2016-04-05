@@ -6,7 +6,7 @@ bubbler.createComponent({
         this.onInit = function () {
             this.modelState.todModel = '';
             this.modelState.todoList = [{id: 0, value: 'Call raf'}, {id: 1, value: 'Buy some drinks'}];
-            this.pubSub.publish('onInitModelState');
+            //this.pubSub.publish('onInitModelState');
         };
 
         this.registerFor("addTodo").on("click", function (event) {
@@ -45,46 +45,17 @@ bubbler.createComponent({
     },
 
     viewUpdater: function () {
-        this.on('onInitModelState', function (dom) {
-            this.modelState.todoList.forEach(function (listItem) {
-                var addedItem = {
-                    id: listItem.id,
-                    value: listItem.value
-                };
-                var tpl = document.importNode(dom["todo:todoTpl"].content, true);
-                tpl.querySelector('#valueTodoModel').textContent = addedItem.value;
-
-
-
-                //var li = document.createElement('li');
-                //li.innerHTML =
-                //li.children[0].textContent = listItem.value;
-
-
-                //dom.todoContainer.appendChild(dom.todoTpl, obj);
-                dom["todo:todoContainer"].appendChild(tpl);
-
-            })
-        });
+        this.onInit = function () {
+            this.domState.todoContainer.appendChilds(this.domState.todoTpl, this.modelState.todoList);
+        };
 
         this.on('onTodoComplete', function (event) {
-
-            var child = this.elementState.addedItems.find(function (item) {
-                return item.id.toString() === event.target.dataset.id;
-            });
-
-            this.elementState.addedItems = this.elementState.addedItems.filter(function (item) {
-                return item.id.toString() !== event.target.dataset.id;
-            });
-
-            document.getElementById("todoListContainer").removeChild(child.element);
+            var elementId = event.target.dataset.eventParam;
+            this.domState.todoContainer.removeChild(elementId);
         });
 
-        this.on('onItemAdded', function (dom) {
-            var tpl = document.importNode(dom["todoContainer:todoTpl"].content, true);
-            tpl.querySelector('#valueTodoModel').textContent = this.modelState.todoModel.value;
-
-            dom["todo:todoContainer"].appendChild(tpl);
+        this.on('onItemAdded', function () {
+            this.domState.todoContainer.appendChild(this.domState.todoTpl, this.modelState.todoModel);
         });
     }
 }, ['todo']);
