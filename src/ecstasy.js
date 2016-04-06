@@ -196,22 +196,23 @@
             flattenDom.domAsString =domAsString;
             return flattenDom;
 
-            function doFlattenDom(componentId, domElement, flattenDom, domState, domMethod) {
-                for (var key in domElement.children) {
-                    if (domElement.children.hasOwnProperty(key)) {
+            function doFlattenDom(componentId, domElement, flattenDom, domState) {
+                Object.keys(domElement.children).forEach(function(key){
                         var child = domElement.children[key];
-                        if (child.children.length > 0) doFlattenDom(componentId, child, flattenDom, domAsString);
+                        if(child) {
+                            if (child.children.length > 0)
+                                doFlattenDom(componentId, child, flattenDom, domState);
 
-                        //todo: don't need to create each dom method
-                        domState[child.id] = new DomMethod(child);
-                        //set unique id
-                        var id = componentId + ':' + child.id;
-                        child.id = id;
-                        flattenDom[id] = child;
-                        // if(!bubbler.isEmptyObject(child.dataset))
-                        //     domAsString[id] =child.outerHTML;
-                    }
-                }
+                            //todo: don't need to create each dom method
+                            domState[child.id] = new DomMethod(child);
+
+                            //set unique id
+                            var id = componentId + ':' + child.id;
+                            child.id = id;
+                            flattenDom[id] = child;
+                        }
+
+                });
             }
 
             function DomMethod(element){
@@ -219,18 +220,41 @@
                     console.log('called remove child')
                 }
 
-                this.appendChild = function(){
-                    console.log('called appendChild')
+                this.appendChild = function(tpl, item){
+                    var tplEl = tpl.getElement();
+                    appendChild(tplEl, item)
                 }
 
                 this.appendChilds = function (tpl, items) {
+                    var tplEl = tpl.getElement();
 
                     items.forEach(function(item){
-                        var tpl = document.importNode(flattenDom["todo:todoTpl"].content, true);
-                        tpl.querySelector('#valueTodoModel').textContent = item.value;
-                        element.appendChild(tpl);
+                        appendChild(tplEl, item)
                     })
                     console.log('called appendChilds', element, tpl, items)
+                }
+
+                this.getElement = function(){
+                    return element;
+                }
+
+                function appendChild(tplEl, item){
+                    setValue(tplEl.content.children[0], item);
+                    var t = document.importNode(tplEl.content, true);
+                    element.appendChild(t);
+                }
+
+                function setValue(tpl, item) {
+                    for(var i =0; i<tpl.children.length; i++){
+                        var child = tpl.children[i];
+                        if(child.children.length>0)
+                            setValue(child, item);
+
+                        Object.keys(item).forEach(function(key){
+                            child.id = child.id.replace('${'+ key +'}', item[key]);
+                            child.textContent = child.textContent.replace('${'+ key +'}', item[key]);
+                        })
+                    }
                 }
             }
         }

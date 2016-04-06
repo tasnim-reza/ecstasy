@@ -13,11 +13,11 @@
     <input id="addTodo" type="button" data-event value="Add Todo"/>
     <ol id="todoContainer">
         <template id="todoTpl">
-            <li id="todoItem${identity}">
-                <span id="valueTodoModel" data-value="todoModel"></span>
-                <button id="done${identity}" data-eventParam="todoItem${identity}">done</button>
+            <li id="todoItem${id}">
+                <span id="valueTodoModel${id}" data-value="">${value}</span>
+                <button id="done${id}" data-eventParam="todoItem${id}">done</button>
                 --
-                <button id="cancel${identity}" data-event>cancel</button>
+                <button id="cancel${id}" data-event>cancel</button>
             </li>
         </template>
     </ol>
