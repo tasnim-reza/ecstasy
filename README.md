@@ -93,13 +93,13 @@ Find the sorted node ids form `domAsString`. picked the nodes from `domElement` 
 ## Design pattern
 
 
-## Problems
+## Typical system has couple of problems like
 
-1. addEventListener/removeEventListener
+1. addEventListener/removeEventListener - Solution could be
     Single event listener
-2. arbitrary javascript object change
+2. arbitrary javascript object change - Can be managed by
     Single state container
-3. inefficiently dom manipulation
+3. inefficiently dom manipulation -
     Request us to manipulate your dom, don't need to touch yourself.
 4. 
     
@@ -110,6 +110,9 @@ Find the sorted node ids form `domAsString`. picked the nodes from `domElement` 
 ![bubble flow structure](https://github.com/tasnim-reza/ecstasy/raw/master/site/img/bubble-flow1.png "bubble flow structure")
 
  onclick event -> single event listener -> single state -> action handler/state mutator/view updater
+
+ ## Contributor
+Not ready for pull request :(
 
 
 
