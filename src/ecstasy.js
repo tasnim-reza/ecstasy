@@ -50,7 +50,8 @@
         var token = event.target.id.split(':'),
             bubbleName = token[0],
             participant = participants[bubbleName],
-            eventName = token[1],
+            eventNameToken = token[1].split('-'),
+            eventName = eventNameToken[0],
             actionName = eventName + ':' + event.type;
 
         if (!participant) {
@@ -120,7 +121,7 @@
         var componentDomLite = new ComponentDomLite(options, componentState.state);
 
         components[options.name] = Object.assign(componentState, componentDomLite);
-        console.log('component', components[options.name]);
+        //console.log('component', components[options.name]);
 
         function ComponentState(options) {
             var state = new State(),
@@ -141,7 +142,7 @@
                         if (state.pubSub.onEvents[eventName]) {
                             //ToDo: should send specific dom instead componentDomLite
                             //var dom = participants[state.selector].dom;
-                            state.pubSub.onEvents[eventName].call(state, componentDomLite);
+                            state.pubSub.onEvents[eventName].call(state, componentDomLite, event);
                         }
                     }
                 };
@@ -188,12 +189,10 @@
 
         function ComponentDomLite(option, state) {
             var flattenDom = Object.create(null),
-                domAsString = {},
                 domElement = physicalDom.document.getElementById(option.selector);
             if (!domElement) throw "No dom element found, for component: " + option.name + " , selector: " + option.selector;
 
             doFlattenDom(domElement.id, domElement, flattenDom, state.domState, new DomMethod());
-            flattenDom.domAsString =domAsString;
             return flattenDom;
 
             function doFlattenDom(componentId, domElement, flattenDom, domState) {
@@ -216,8 +215,11 @@
             }
 
             function DomMethod(element){
-                this.removeChild = function(){
-                    console.log('called remove child')
+                this.removeChild = function(elementId){
+                    var tplEl = this.getElement();
+                    var elId = tplEl.id.split(':')[0] + ':' + elementId;
+                    flattenDom[elId].remove()
+                    delete flattenDom[elId];
                 }
 
                 this.appendChild = function(tpl, item){
@@ -231,7 +233,7 @@
                     items.forEach(function(item){
                         appendChild(tplEl, item)
                     })
-                    console.log('called appendChilds', element, tpl, items)
+                    //console.log('called appendChilds', element, tpl, items)
                 }
 
                 this.getElement = function(){
@@ -239,22 +241,38 @@
                 }
 
                 function appendChild(tplEl, item){
-                    setValue(tplEl.content.children[0], item);
+                    var componentId = tplEl.id.split(':')[0];
                     var t = document.importNode(tplEl.content, true);
+
+                    setValue(componentId, t.children[0], item);
+
                     element.appendChild(t);
                 }
 
-                function setValue(tpl, item) {
+                function setValue(componentId, tpl, item) {
+                    applyValue(componentId, tpl, item, true);
                     for(var i =0; i<tpl.children.length; i++){
                         var child = tpl.children[i];
                         if(child.children.length>0)
-                            setValue(child, item);
+                            setValue(componentId, child, item);
 
-                        Object.keys(item).forEach(function(key){
-                            child.id = child.id.replace('${'+ key +'}', item[key]);
-                            child.textContent = child.textContent.replace('${'+ key +'}', item[key]);
-                        })
+                        applyValue(componentId, child, item)
                     }
+                }
+
+                function applyValue(componentId, child, item, idOnly) {
+                    child.id = componentId + ':' + child.id;
+                    flattenDom[child.id] = child;
+                    Object.keys(item).forEach(function(key){
+                        child.id = child.id.replace('${'+ key +'}', item[key]);
+                        flattenDom[child.id] = child;
+                        if(!idOnly) {
+                            child.textContent = child.textContent.replace('${' + key + '}', item[key]);
+                            Object.keys(child.dataset).forEach(function (key1) {
+                                child.dataset[key1] = child.dataset[key1].replace('${' + key + '}', item[key]);
+                            })
+                        }
+                    })
                 }
             }
         }

@@ -10,20 +10,25 @@ bubbler.createComponent({
         };
 
         this.registerFor("addTodo").on("click", function (event) {
-            this.modelState.todoList.push(this.modelState.todoModel);
+            if(!this.modelState.todoList){
+                this.modelState.todoList = [];
+            }
+
+            this.modelState.newItem = {
+                id: this.modelState.todoList.length + 1,
+                value: this.modelState.todoModel
+            };
+            this.modelState.todoList.push(this.modelState.newItem);
             this.pubSub.publish('onItemAdded');
         });
 
         this.registerFor("todoModel").on("blur", function (event) {
-            this.modelState.todoModel = {
-                id: this.modelState.todoList.length + 1,
-                value: event.target.value
-            };
+            this.modelState.todoModel = event.target.value;
         });
 
         this.registerFor("done").on('click', function (event) {
             this.modelState.todoList = this.modelState.todoList.filter(function (listItem) {
-                listItem.id !== event.target.id;
+                listItem.id !== event.target.id.split('-');[1]
             })
             this.pubSub.publish('onTodoComplete', event);
         });
@@ -49,13 +54,13 @@ bubbler.createComponent({
             this.domState.todoContainer.appendChilds(this.domState.todoTpl, this.modelState.todoList);
         };
 
-        this.on('onTodoComplete', function (event) {
-            var elementId = event.target.dataset.eventParam;
+        this.on('onTodoComplete', function (elm, event) {
+            var elementId = event.target.dataset.eventelementid;
             this.domState.todoContainer.removeChild(elementId);
         });
 
         this.on('onItemAdded', function () {
-            this.domState.todoContainer.appendChild(this.domState.todoTpl, this.modelState.todoModel);
+            this.domState.todoContainer.appendChild(this.domState.todoTpl, this.modelState.newItem);
         });
     }
 }, ['todo']);
