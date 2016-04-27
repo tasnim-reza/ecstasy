@@ -73,32 +73,6 @@
         participant.state.events[actionName].call(participant.state, event);
     }
 
-    window.bubbler = {
-        createReusableComponent: function (options, selector) {
-            components[options.name] = createComponentLite(options);
-            if (selector)
-                this.loadComponent(options.name, [selector]);
-        },
-
-        createComponent: function (options, selectors) {
-            selectors.forEach(function(selector){
-                new CreateComponent(options);
-                participants[selector] = components[options.name];
-            });
-        },
-
-        /*
-         targetSelectors: where the component will be loaded.
-         */
-        loadComponent: function (componentName, targetSelectors) {
-            var componentLite = components[componentName],
-                isReusableComponent = true;
-            targetSelectors.forEach(function (targetSelector) {
-                renderComponent(componentLite, targetSelector, isReusableComponent);
-            })
-        }
-    }
-
     function renderComponent(componentLite, targetSelector, isReusableComponent) {
         var options = componentLite.options;
 
@@ -278,6 +252,32 @@
         }
     }
 
+    window.bubbler = {
+        createReusableComponent: function (options, selector) {
+            components[options.name] = createComponentLite(options);
+            if (selector)
+                this.loadComponent(options.name, [selector]);
+        },
+
+        createComponent: function (options, selectors) {
+            selectors.forEach(function(selector){
+                new CreateComponent(options);
+                participants[selector] = components[options.name];
+            });
+        },
+
+        /*
+         targetSelectors: where the component will be loaded.
+         */
+        loadComponent: function (componentName, targetSelectors) {
+            var componentLite = components[componentName],
+                isReusableComponent = true;
+            targetSelectors.forEach(function (targetSelector) {
+                renderComponent(componentLite, targetSelector, isReusableComponent);
+            })
+        }
+    }
+
     //utility methods
     bubbler.parse = function (tpl, data) {
         var replacedByData = tpl.replace('{item}', data.value);
@@ -288,6 +288,4 @@
     bubbler.isEmptyObject = function(obj){
         return Object.keys(obj).length === 0 && JSON.stringify(obj) === JSON.stringify({});
     }
-
-
 })(window, document);
