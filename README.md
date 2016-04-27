@@ -112,7 +112,11 @@ Find the sorted node ids form `domAsString`. picked the nodes from `domElement` 
  onclick event -> single event listener -> single state -> action handler/state mutator/view updater
 
 ## Demo
-![todo example](http://embed.plnkr.co/ExSLIWfDivMp2NgUkm6j/)
+http://embed.plnkr.co/ExSLIWfDivMp2NgUkm6j/
+
+[![todo example](http://embed.plnkr.co/ExSLIWfDivMp2NgUkm6j/)]
+
+<iframe src="http://embed.plnkr.co/ExSLIWfDivMp2NgUkm6j/" width="100%" height="500px" allowfullscreen></iframe>
 
 ## Contributor
 Not ready for pull request :(
