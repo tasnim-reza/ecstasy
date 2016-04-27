@@ -1,0 +1,47 @@
+{
+  "name": "ecstasyjs",
+  "version": "0.0.1",
+  "description": "Client side application framework, No outer dependency",
+  "author": "Tasnim Reza <reza5619@gmail.com>",
+  "contributors": [{
+    "name": "Tasnim Reza",
+    "email": "reza5619@gmail.com"
+  }],
+  "bin": {
+
+  },
+  "scripts": {
+    "serve": "http-server"
+  },
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tasnim-reza/ecstasy"
+  },
+  "bugs": {
+    "url": "https://github.com/tasnim-reza/ecstasy/issues"
+  },
+  "keywords": [
+    "application framework",
+    "ecstasy"
+  ],
+  "dependencies": {
+  },
+  "devDependencies": {
+    "gulp": "*",
+    "gulp-jshint": "*",
+    "gulp-concat": "*",
+    "gulp-rename": "*",
+    "gulp-uglify": "*",
+    "gulp-inject": "*",
+    "stream-series": "*"
+
+  },
+  "preferGlobal": true,
+  "private": true,
+  "publishConfig": {
+    "registry": "http://tasnim-reza.github.io/ecstasyjs/"
+  },
+
+  "license": "MIT"
+}
