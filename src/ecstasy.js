@@ -30,7 +30,7 @@
     })();
 
     function callInitMethods() {
-        Object.keys(participants).forEach(function(key){
+        Object.keys(participants).forEach(function (key) {
             var participant = participants[key];
             participant.bubbles.forEach(function (bubble) {
                 if (bubble['onInit'])
@@ -47,7 +47,13 @@
 
     function eventHandler(event) {
 
-        var token = event.target.id.split(':'),
+        if (!event.target.dataset.event) {
+            console.log('not found event: ', event.target);
+            return;
+        }
+
+        var token = event.target.dataset.event.split(':'),
+        //event.target.id.split(':'),
             bubbleName = token[0],
             participant = participants[bubbleName],
             eventNameToken = token[1].split('-'),
@@ -90,7 +96,7 @@
         };
     }
 
-    function CreateComponent(options){
+    function CreateComponent(options) {
         var componentState = new ComponentState(options);
         var componentDomLite = new ComponentDomLite(options, componentState.state);
 
@@ -127,7 +133,7 @@
                 return state;
             }
 
-            function DomState(){
+            function DomState() {
 
             }
 
@@ -140,9 +146,10 @@
                     var func = options[buble],
                         updater = Object.create(func.prototype);
 
-                    updater.registerFor = function (elementId) {
+                    updater.registerFor = function (selector) {
+                        //todo: check valid selector
                         this.on = function on(eventName, callback) {
-                            var key = elementId + ':' + eventName;
+                            var key = selector + ':' + eventName;
                             state.events[key] = callback;
                         };
                         return this;
@@ -170,33 +177,35 @@
             return flattenDom;
 
             function doFlattenDom(componentId, domElement, flattenDom, domState) {
-                Object.keys(domElement.children).forEach(function(key){
-                        var child = domElement.children[key];
-                        if(child) {
-                            if (child.children.length > 0)
-                                doFlattenDom(componentId, child, flattenDom, domState);
+                Object.keys(domElement.children).forEach(function (key) {
+                    var child = domElement.children[key];
+                    var data = child.dataset;
 
-                            //todo: don't need to create each dom method
-                            domState[child.id] = new DomMethod(child);
+                    if (child) {
+                        if (child.children.length > 0)
+                            doFlattenDom(componentId, child, flattenDom, domState);
 
-                            //set unique id
-                            var id = componentId + ':' + child.id;
-                            child.id = id;
-                            flattenDom[id] = child;
-                        }
+                        //todo: don't need to create each dom method
+                        domState[data.model] = new DomMethod(child);
+
+                        //set unique id
+                        var id = componentId + ':' + child.id;
+                        child.id = id;
+                        flattenDom[id] = child;
+                    }
 
                 });
             }
 
-            function DomMethod(element){
-                this.removeChild = function(elementId){
+            function DomMethod(element) {
+                this.removeChild = function (elementId) {
                     var tplEl = this.getElement();
                     var elId = tplEl.id.split(':')[0] + ':' + elementId;
                     flattenDom[elId].remove()
                     delete flattenDom[elId];
                 }
 
-                this.appendChild = function(tpl, item){
+                this.appendChild = function (tpl, item) {
                     var tplEl = tpl.getElement();
                     appendChild(tplEl, item)
                 }
@@ -204,17 +213,17 @@
                 this.appendChilds = function (tpl, items) {
                     var tplEl = tpl.getElement();
 
-                    items.forEach(function(item){
+                    items.forEach(function (item) {
                         appendChild(tplEl, item)
                     })
                     //console.log('called appendChilds', element, tpl, items)
                 }
 
-                this.getElement = function(){
+                this.getElement = function () {
                     return element;
                 }
-
-                function appendChild(tplEl, item){
+                
+                function appendChild(tplEl, item) {
                     var componentId = tplEl.id.split(':')[0];
                     var t = document.importNode(tplEl.content, true);
 
@@ -225,9 +234,9 @@
 
                 function setValue(componentId, tpl, item) {
                     applyValue(componentId, tpl, item, true);
-                    for(var i =0; i<tpl.children.length; i++){
+                    for (var i = 0; i < tpl.children.length; i++) {
                         var child = tpl.children[i];
-                        if(child.children.length>0)
+                        if (child.children.length > 0)
                             setValue(componentId, child, item);
 
                         applyValue(componentId, child, item)
@@ -237,10 +246,10 @@
                 function applyValue(componentId, child, item, idOnly) {
                     child.id = componentId + ':' + child.id;
                     flattenDom[child.id] = child;
-                    Object.keys(item).forEach(function(key){
-                        child.id = child.id.replace('${'+ key +'}', item[key]);
+                    Object.keys(item).forEach(function (key) {
+                        child.id = child.id.replace('${' + key + '}', item[key]);
                         flattenDom[child.id] = child;
-                        if(!idOnly) {
+                        if (!idOnly) {
                             child.textContent = child.textContent.replace('${' + key + '}', item[key]);
                             Object.keys(child.dataset).forEach(function (key1) {
                                 child.dataset[key1] = child.dataset[key1].replace('${' + key + '}', item[key]);
@@ -260,7 +269,7 @@
         },
 
         createComponent: function (options, selectors) {
-            selectors.forEach(function(selector){
+            selectors.forEach(function (selector) {
                 new CreateComponent(options);
                 participants[selector] = components[options.name];
             });
@@ -285,7 +294,7 @@
 
         return replacedByEventId;
     }
-    bubbler.isEmptyObject = function(obj){
+    bubbler.isEmptyObject = function (obj) {
         return Object.keys(obj).length === 0 && JSON.stringify(obj) === JSON.stringify({});
     }
 })(window, document);
