@@ -16,8 +16,7 @@
             };
 
             this.registerFor('numeric').on('click', function (event) {
-                if (this.modelState.display === this.modelState.displayDefaultValue)
-                    this.modelState.display = '';
+                clearDisplay.call(this,[]);
 
                 this.modelState.display += event.target.value;
 
@@ -34,6 +33,15 @@
                     this.pubSub.publish('displayUpdate');
                 }
             });
+
+            this.registerFor('point').on('click', function (event) {
+                clearDisplay.call(this,[]);
+                if(!(findLastOperand(this.modelState.display).indexOf('.') > -1)) {
+                    this.modelState.display += '.';
+                    this.pubSub.publish('clearError');
+                    this.pubSub.publish('displayUpdate');
+                }
+            })
 
             this.registerFor('clear').on('click', function (event) {
                 this.modelState.display = this.modelState.displayDefaultValue;
@@ -118,20 +126,21 @@
                     operand1 = parseFloat(operand1) / parseFloat(operand2);
                     break;
                 case 'e':
+                    operand1 = Math.pow(operand1, operand2);
                     break;
             }
 
-            i = idx;
+            i = result.idx;
         }
 
-        return result;
+        return operand1;
     }
 
     function findOperand(idx, values) {
         var operand = '';
 
         for (var i = idx; i < values.length; i++) {
-            operand = values[i];
+            operand += values[i];
 
             if (isOperator(values[i + 1])) {
                 idx = i;
@@ -143,5 +152,20 @@
             operand: operand,
             idx: idx
         };
+    }
+
+    function findLastOperand(values) {
+        var i = values.length -1,
+            operand = [];
+        while (values[i] && !isOperator(values[i])) {
+            operand.push(values[i--]);
+        }
+
+        return operand.reverse().join('');
+    }
+
+    function clearDisplay() {
+        if (this.modelState.display === this.modelState.displayDefaultValue)
+            this.modelState.display = '';
     }
 })()

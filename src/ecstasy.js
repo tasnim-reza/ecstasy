@@ -47,8 +47,12 @@
 
     function eventHandler(event) {
 
+        if (event.type === 'keyup') {
+            return handleKeyboardShortcut(event);
+        }
+
         if (!event.target.dataset.event) {
-            console.log('not found event: ', event.target);
+            console.log('not found event: ', event);
             return;
         }
 
@@ -66,6 +70,36 @@
         }
 
         dispatch(participant, actionName, event);
+    }
+
+    function handleKeyboardShortcut(event) {
+        //todo: find proper participant
+        var actor = participants['calculator'];
+
+        if (!actor) return;
+
+        Object.keys(actor).forEach(function (key) {
+            var meta = actor[key].meta,
+                ref = actor[key].ref;
+
+            if (meta && meta.keycode && (parseInt(meta.keycode) === event.keyCode)) {
+                event.stopPropagation();
+                ref.click();
+
+                /*var token = meta.event.split(':'),
+                 //event.target.id.split(':'),
+                 bubbleName = token[0],
+                 participant = participants[bubbleName],
+                 eventNameToken = token[1].split('-'),
+                 eventName = eventNameToken[0],
+                 actionName = eventName + ':' + 'click';
+
+                 dispatch(participant, actionName, event);*/
+            }
+        })
+
+        console.log('key board', participants, event.keyCode, event.code)
+
     }
 
     function dispatch(participant, actionName, event) {
@@ -101,7 +135,7 @@
         var componentDomLite = new ComponentDomLite(options, componentState.state);
 
         components[options.name] = Object.assign(componentState, componentDomLite);
-        //console.log('component', components[options.name]);
+        console.log('component', components[options.name]);
 
         function ComponentState(options) {
             var state = new State(),
@@ -129,12 +163,84 @@
 
                 state.modelState = {};
                 state.domState = new DomState();
+                state.elementState = new ElementState();
 
                 return state;
             }
 
             function DomState() {
 
+            }
+
+            function ElementState() {
+                this.removeChild = function (elementId) {
+                    var tplEl = this.getElement();
+                    var elId = tplEl.id.split(':')[0] + ':' + elementId;
+                    flattenDom[elId].remove()
+                    delete flattenDom[elId];
+                }
+
+                this.appendChild = function (container, child, item) {
+                    var containerElm = getElement(container);
+                    var childElm = getElement(child);
+                    appendChild(containerElm, childElm, item)
+                }
+
+                this.appendChilds = function (container, child, items) {
+                    var containerElm = getElement(container);
+                    var childElm = getElement(child);
+
+                    items.forEach(function (item) {
+                        appendChild(containerElm, childElm, item)
+                    })
+                }
+
+                function appendChild(containerElm, childElm, item) {
+                    var t = document.importNode(childElm.ref.content, true);
+
+                    setValue(t.children[0], item);
+
+                    containerElm.ref.appendChild(t);
+                }
+
+                function setValue(tpl, item) {
+                    //applyValue(tpl, item, true);
+                    for (var i = 0; i < tpl.children.length; i++) {
+                        var child = tpl.children[i];
+                        if (child.children.length > 0)
+                            setValue(child, item);
+
+                        applyValue(child, item)
+                    }
+                }
+
+                function applyValue(child, item) {
+                    Object.keys(item).forEach(function (key) {
+                        var value = item[key];
+                        var data = child.dataset;
+                        Object.keys(data).forEach(function (key1) {
+                            if (key1 === 'value' && data[key1].indexOf(key) > -1)
+                                child.textContent = item[key];
+                            child.dataset[key1] = child.dataset[key1].replace('${' + key + '}', item[key]);
+                        })
+
+                        componentDomLite.push({
+                            meta: data,
+                            ref: child
+                        });
+                    })
+                }
+
+                function getElement(dataElement) {
+                    //dataElement || dataTemplate
+
+                    var foundKey = Object.keys(componentDomLite).filter(function (key) {
+                        var element = componentDomLite[key];
+                        return (element.meta.element === dataElement) || (element.meta.template === dataElement);
+                    });
+
+                    return componentDomLite[foundKey];
+                }
             }
 
             function getRegisteredBubbles(state, options) {
@@ -169,95 +275,51 @@
         }
 
         function ComponentDomLite(option, state) {
-            var flattenDom = Object.create(null),
+            var flattenDom = [],
                 domElement = physicalDom.document.getElementById(option.selector);
-            if (!domElement) throw "No dom element found, for component: " + option.name + " , selector: " + option.selector;
+
+            if (!domElement)
+                throw "No dom element found, for component: " + option.name + " , selector: " + option.selector;
 
             doFlattenDom(domElement.id, domElement, flattenDom, state.domState, new DomMethod());
+
             return flattenDom;
 
             function doFlattenDom(componentId, domElement, flattenDom, domState) {
                 Object.keys(domElement.children).forEach(function (key) {
                     var child = domElement.children[key];
-                    var data = child.dataset;
 
                     if (child) {
                         if (child.children.length > 0)
                             doFlattenDom(componentId, child, flattenDom, domState);
 
+                        var data = child.dataset;
+
                         //todo: don't need to create each dom method
                         domState[data.model] = new DomMethod(child);
 
                         //set unique id
-                        var id = componentId + ':' + child.id;
-                        child.id = id;
-                        flattenDom[id] = child;
+                        //var id = componentId + ':' + (child.id | autoId);
+                        //child.id = id;
+                        //
+                        if (data.event || data.model || data.keycode || data.element || data.template) {
+                            flattenDom.push({
+                                meta: data,
+                                ref: child
+                            });
+                        }
                     }
 
                 });
             }
 
             function DomMethod(element) {
-                this.removeChild = function (elementId) {
-                    var tplEl = this.getElement();
-                    var elId = tplEl.id.split(':')[0] + ':' + elementId;
-                    flattenDom[elId].remove()
-                    delete flattenDom[elId];
-                }
-
-                this.appendChild = function (tpl, item) {
-                    var tplEl = tpl.getElement();
-                    appendChild(tplEl, item)
-                }
-
-                this.appendChilds = function (tpl, items) {
-                    var tplEl = tpl.getElement();
-
-                    items.forEach(function (item) {
-                        appendChild(tplEl, item)
-                    })
-                    //console.log('called appendChilds', element, tpl, items)
-                }
-
                 this.getElement = function () {
                     return element;
                 }
-                
-                function appendChild(tplEl, item) {
-                    var componentId = tplEl.id.split(':')[0];
-                    var t = document.importNode(tplEl.content, true);
-
-                    setValue(componentId, t.children[0], item);
-
-                    element.appendChild(t);
-                }
-
-                function setValue(componentId, tpl, item) {
-                    applyValue(componentId, tpl, item, true);
-                    for (var i = 0; i < tpl.children.length; i++) {
-                        var child = tpl.children[i];
-                        if (child.children.length > 0)
-                            setValue(componentId, child, item);
-
-                        applyValue(componentId, child, item)
-                    }
-                }
-
-                function applyValue(componentId, child, item, idOnly) {
-                    child.id = componentId + ':' + child.id;
-                    flattenDom[child.id] = child;
-                    Object.keys(item).forEach(function (key) {
-                        child.id = child.id.replace('${' + key + '}', item[key]);
-                        flattenDom[child.id] = child;
-                        if (!idOnly) {
-                            child.textContent = child.textContent.replace('${' + key + '}', item[key]);
-                            Object.keys(child.dataset).forEach(function (key1) {
-                                child.dataset[key1] = child.dataset[key1].replace('${' + key + '}', item[key]);
-                            })
-                        }
-                    })
-                }
             }
+
+
         }
     }
 

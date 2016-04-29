@@ -9,16 +9,15 @@
 <h1>Ecstasy JS</h1>
 <div id="todo">
     <h2 id="title">Todo Example</h2>
-    <input id="todoModel" type="text" data-value="todoModel"/>
-    <input id="addTodo" type="button" data-event value="Add Todo"/>
-    <ol id="todoContainer">
-        <template id="todoTpl">
-            <li id="todoItem-${id}">
-
-                <span id="valueTodoModel-${id}" data-value="">${value}</span>
-                <button id="done-${id}" data-eventElementId="todoItem-${id}">done</button>
+    <input data-event="todo:blur" data-model="todoModel" type="text"/>
+    <button data-event="todo:addTodo">Add Todo</button>
+    <ol data-element="todoContainer">
+        <template data-template="todoTpl">
+            <li data-element="todoItem-${id}">
+                <span data-value="${value}"></span>
+                <button data-event="todo:done" data-event-param="todoItem-${id}">done</button>
                 --
-                <button id="cancel-${id}" data-event>cancel</button>
+                <button data-event="todo:cancel">cancel</button>
             </li>
         </template>
     </ol>
@@ -40,6 +39,7 @@
         }#
     </ol>
 </div>
+
 
 
 

@@ -51,16 +51,16 @@ bubbler.createComponent({
 
     viewUpdater: function () {
         this.onInit = function () {
-            this.domState.todoContainer.appendChilds(this.domState.todoTpl, this.modelState.todoList);
+            this.elementState.appendChilds('todoContainer', 'todoTpl', this.modelState.todoList);
         };
 
         this.on('onTodoComplete', function (elm, event) {
             var elementId = event.target.dataset.eventelementid;
-            this.domState.todoContainer.removeChild(elementId);
+            this.elementState.todoContainer.removeChild(elementId);
         });
 
         this.on('onItemAdded', function () {
-            this.domState.todoContainer.appendChild(this.domState.todoTpl, this.modelState.newItem);
+            this.elementState.todoContainer.appendChild(this.domState.todoTpl, this.modelState.newItem);
         });
     }
 }, ['todo']);
