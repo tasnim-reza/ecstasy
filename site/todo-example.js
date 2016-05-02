@@ -55,13 +55,12 @@ bubbler.createComponent({
         };
 
         this.on('onTodoComplete', function (elm, event) {
-            var elementId = event.target.dataset.eventelementid;
-            this.elementState.todoContainer.removeChild(elementId);
+            var elementId = event.target.dataset.eventParam;
+            this.elementState.removeChild('todoContainer', elementId);
         });
 
         this.on('onItemAdded', function () {
-            this.elementState.todoContainer.appendChild(this.domState.todoTpl, this.modelState.newItem);
+            this.elementState.appendChild('todoContainer', 'todoTpl', this.modelState.newItem);
         });
     }
 }, ['todo']);
-

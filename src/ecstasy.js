@@ -18,6 +18,7 @@
             'onmousedown': 'mousedown',
             'onkeyup': 'keyup',
             'onblur': 'blur'
+            //.. etc
         };
 
     (function initBubbler() {
@@ -47,6 +48,7 @@
 
     function eventHandler(event) {
 
+        //todo: need to address ctrl key
         if (event.type === 'keyup') {
             return handleKeyboardShortcut(event);
         }
@@ -173,11 +175,10 @@
             }
 
             function ElementState() {
-                this.removeChild = function (elementId) {
-                    var tplEl = this.getElement();
-                    var elId = tplEl.id.split(':')[0] + ':' + elementId;
-                    flattenDom[elId].remove()
-                    delete flattenDom[elId];
+                this.removeChild = function (container, elementId) {
+                    var removedElm = getElement(elementId);
+                    removedElm.ref.remove()
+                    delete componentDomLite[removedElm.idx];
                 }
 
                 this.appendChild = function (container, child, item) {
@@ -198,13 +199,13 @@
                 function appendChild(containerElm, childElm, item) {
                     var t = document.importNode(childElm.ref.content, true);
 
+                    applyValue(t.children[0], item);
                     setValue(t.children[0], item);
 
                     containerElm.ref.appendChild(t);
                 }
 
                 function setValue(tpl, item) {
-                    //applyValue(tpl, item, true);
                     for (var i = 0; i < tpl.children.length; i++) {
                         var child = tpl.children[i];
                         if (child.children.length > 0)
@@ -215,20 +216,26 @@
                 }
 
                 function applyValue(child, item) {
+                    var data = child.dataset;
+
                     Object.keys(item).forEach(function (key) {
                         var value = item[key];
-                        var data = child.dataset;
+
                         Object.keys(data).forEach(function (key1) {
                             if (key1 === 'value' && data[key1].indexOf(key) > -1)
                                 child.textContent = item[key];
                             child.dataset[key1] = child.dataset[key1].replace('${' + key + '}', item[key]);
                         })
 
-                        componentDomLite.push({
-                            meta: data,
-                            ref: child
-                        });
+
                     })
+
+                    console.log(child.dataset);
+                    componentDomLite.push({
+                        idx: componentDomLite.length,
+                        meta: child.dataset,
+                        ref: child
+                    });
                 }
 
                 function getElement(dataElement) {
@@ -303,7 +310,10 @@
                         //child.id = id;
                         //
                         if (data.event || data.model || data.keycode || data.element || data.template) {
+                            console.log(data);
+
                             flattenDom.push({
+                                idx: flattenDom.length,
                                 meta: data,
                                 ref: child
                             });
