@@ -1,104 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Calculator Example</title>
 </head>
+
 <body>
 
-<header>Calculator Example</header>
+    <header>
+        <h1>Calculator Example</h1>
+    </header>
 
-<div id="calculator" tabindex="0" class="container">
+    <div id="calculator" tabindex="0" class="container">
 
-    <input data-model="displayModel" tabindex="1" type="text" readonly class="display" value="0.0">
+        <input data-model="displayModel" tabindex="1" type="text" readonly class="display" value="0.0">
 
-    <div class="error-wrapper">
-        <div data-model="errorModel" class="error" hidden></div>
-    </div>
+        <div class="error-wrapper">
+            <div data-model="errorModel" class="error" hidden></div>
+        </div>
 
-    <div>
-        <button data-event="calculator:clear" data-keyCode="46" class="numeric-btn cell-2">clear</button>
-        <button data-event="calculator:operator" data-keyCode="69" value="e" class="numeric-btn cell-1">exp</button>
-        <button data-event="calculator:operator" data-keyCode="111" value="/" class="numeric-btn cell-1">/</button>
-    </div>
+        <div>
+            <button data-event="calculator:clear" data-keyCode="46" class="numeric-btn cell-2">clear</button>
+            <button data-event="calculator:operator" data-keyCode="69" value="e" class="numeric-btn cell-1">exp</button>
+            <button data-event="calculator:operator" data-keyCode="111" value="/" class="numeric-btn cell-1">/</button>
+        </div>
 
-    <div>
-        <button data-event="calculator:numeric" data-keyCode="103" value="7" class="numeric-btn cell-1">7</button>
-        <button data-event="calculator:numeric" data-keyCode="104" value="8" class="numeric-btn cell-1">8</button>
-        <button data-event="calculator:numeric" data-keyCode="105" value="9" class="numeric-btn cell-1">9</button>
-        <button data-event="calculator:operator" data-keyCode="106" value="*" class="numeric-btn cell-1">*</button>
-    </div>
+        <div>
+            <button data-event="calculator:numeric" data-keyCode="103" value="7" class="numeric-btn cell-1">7</button>
+            <button data-event="calculator:numeric" data-keyCode="104" value="8" class="numeric-btn cell-1">8</button>
+            <button data-event="calculator:numeric" data-keyCode="105" value="9" class="numeric-btn cell-1">9</button>
+            <button data-event="calculator:operator" data-keyCode="106" value="*" class="numeric-btn cell-1">*</button>
+        </div>
 
-    <div>
-        <button data-event="calculator:numeric" data-keyCode="100" value="4" class="numeric-btn cell-1">4</button>
-        <button data-event="calculator:numeric" data-keyCode="101" value="5" class="numeric-btn cell-1">5</button>
-        <button data-event="calculator:numeric" data-keyCode="102" value="6" class="numeric-btn cell-1">6</button>
-        <button data-event="calculator:operator" data-keyCode="109" value="-" class="numeric-btn cell-1">-</button>
-    </div>
+        <div>
+            <button data-event="calculator:numeric" data-keyCode="100" value="4" class="numeric-btn cell-1">4</button>
+            <button data-event="calculator:numeric" data-keyCode="101" value="5" class="numeric-btn cell-1">5</button>
+            <button data-event="calculator:numeric" data-keyCode="102" value="6" class="numeric-btn cell-1">6</button>
+            <button data-event="calculator:operator" data-keyCode="109" value="-" class="numeric-btn cell-1">-</button>
+        </div>
 
-    <div>
-        <button data-event="calculator:numeric" data-keyCode="97" value="1" class="numeric-btn cell-1">1</button>
-        <button data-event="calculator:numeric" data-keyCode="98" value="2" class="numeric-btn cell-1">2</button>
-        <button data-event="calculator:numeric" data-keyCode="99" value="3" class="numeric-btn cell-1">3</button>
-        <button data-event="calculator:operator" data-keyCode="107" value="+" class="operator-btn cell-1">+</button>
-    </div>
+        <div>
+            <button data-event="calculator:numeric" data-keyCode="97" value="1" class="numeric-btn cell-1">1</button>
+            <button data-event="calculator:numeric" data-keyCode="98" value="2" class="numeric-btn cell-1">2</button>
+            <button data-event="calculator:numeric" data-keyCode="99" value="3" class="numeric-btn cell-1">3</button>
+            <button data-event="calculator:operator" data-keyCode="107" value="+" class="operator-btn cell-1">+</button>
+        </div>
 
-    <div>
-        <button data-event="calculator:numeric" data-keyCode="96" value="0" class="numeric-btn cell-2">0</button>
-        <button data-event="calculator:point" data-keyCode="110" value="." class="numeric-btn cell-1">.</button>
-        <button data-event="calculator:equal" data-keyCode="13" class="numeric-btn cell-1">=</button>
-    </div>
-    <template>
+        <div>
+            <button data-event="calculator:numeric" data-keyCode="96" value="0" class="numeric-btn cell-2">0</button>
+            <button data-event="calculator:point" data-keyCode="110" value="." class="numeric-btn cell-1">.</button>
+            <button data-event="calculator:equal" data-keyCode="13" class="numeric-btn cell-1">=</button>
+        </div>
+        <template>
         <button id="" value="1"></button>
     </template>
 
-</div>
+    </div>
 
-<footer>@Ecstasy.js</footer>
+    <footer>@Ecstasy.js</footer>
 
-<style>
-    .container {
-        margin: 0 auto;
-        padding: 5px;;
-    }
+    <style>
+        .container {
+            margin: 0 auto;
+            padding: 5px;
+            ;
+        }
+        
+        .display {
+            height: 60px;
+            width: 500px;
+            text-align: right;
+            font-size: 25px;
+            font-weight: bold;
+            margin: 0 0 16px 6px;
+        }
+        
+        .cell-1 {
+            width: 116px;
+        }
+        
+        .cell-2 {
+            width: 245px;
+        }
+        
+        .numeric-btn,
+        .operator-btn {
+            height: 70px;
+            font-size: 25px;
+            font-weight: bold;
+            margin: 6px 3px 6px 6px;
+        }
+        
+        .error-wrapper {
+            height: 40px;
+            width: 500px;
+        }
+        
+        .error {
+            border: red solid;
+            height: 40px;
+            width: 500px;
+        }
+    </style>
 
-    .display {
-        height: 60px;
-        width: 500px;
-        text-align: right;
-        font-size: 25px;
-        font-weight: bold;
-        margin: 0 0 16px 6px;
-    }
-
-    .cell-1 {
-        width: 116px;
-    }
-
-    .cell-2 {
-        width: 245px;
-    }
-
-    .numeric-btn, .operator-btn {
-        height: 70px;
-        font-size: 25px;
-        font-weight: bold;
-        margin: 6px 3px 6px 6px;
-    }
-
-    .error-wrapper {
-        height: 40px;
-        width: 500px;
-    }
-
-    .error {
-        border: red solid;
-        height: 40px;
-        width: 500px;
-    }
-</style>
-
-<script src="../src/ecstasy.js"></script>
-<script src="calculator.js"></script>
+    <script src="../src/ecstasy.js"></script>
+    <script src="calculator.js"></script>
 </body>
+
 </html>
